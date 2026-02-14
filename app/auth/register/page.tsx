@@ -11,9 +11,13 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { LanguageToggle } from '@/components/language-toggle';
+import { useI18n } from '@/components/i18n-provider';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -73,11 +77,17 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+      <div className="absolute right-4 top-4">
+        <div className="flex items-center gap-2">
+          <LanguageToggle variant="outline" />
+          <ThemeToggle variant="outline" />
+        </div>
+      </div>
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <Image
-            src="/logo.png"
+            src="/logo.svg"
             alt="CRAI DB"
             width={120}
             height={120}
@@ -87,9 +97,9 @@ export default function RegisterPage() {
 
         <Card className="border border-border">
           <CardHeader className="space-y-2 text-center">
-            <CardTitle className="text-2xl">Create Account</CardTitle>
+            <CardTitle className="text-2xl">{t("auth.create_account")}</CardTitle>
             <CardDescription>
-              Register for CRAI DB to begin your credit risk analysis journey
+              {t("auth.register_desc")}
             </CardDescription>
           </CardHeader>
 
@@ -103,7 +113,7 @@ export default function RegisterPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">{t("auth.full_name")}</Label>
                 <Input
                   id="name"
                   type="text"
@@ -131,20 +141,20 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role">Registration Type</Label>
+                <Label htmlFor="role">{t("auth.registration_type")}</Label>
                 <Select value={formData.registrationType} onValueChange={handleTypeChange}>
                   <SelectTrigger id="role">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="analyst">Analyst</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="analyst">{t("auth.analyst")}</SelectItem>
+                    <SelectItem value="manager">{t("auth.manager")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("auth.password")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -158,7 +168,7 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword">{t("auth.confirm_password")}</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -175,18 +185,18 @@ export default function RegisterPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
+                    {t("auth.creating_account")}
                   </>
                 ) : (
-                  'Create Account'
+                  t("auth.create_account")
                 )}
               </Button>
             </form>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
-              Already have an account?{' '}
+              {t("auth.have_account") + " "}
               <Link href="/auth/login" className="text-accent hover:underline font-medium">
-                Sign in
+                {t("auth.sign_in")}
               </Link>
             </div>
           </CardContent>

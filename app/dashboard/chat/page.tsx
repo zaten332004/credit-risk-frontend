@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Loader2 } from 'lucide-react';
+import { authJsonHeaders } from '@/lib/auth/token';
+import { useI18n } from '@/components/i18n-provider';
 
 interface Message {
   id: string;
@@ -15,10 +17,11 @@ interface Message {
 }
 
 export default function ChatPage() {
+  const { t } = useI18n();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Hello! How can I help you with your credit portfolio today?',
+      text: t('chat.initial_message'),
       sender: 'assistant',
       timestamp: new Date(),
     },
@@ -51,22 +54,21 @@ export default function ChatPage() {
     try {
       const response = await fetch('/api/v1/chat/query', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
+        headers: authJsonHeaders(),
         body: JSON.stringify({ message: input }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        throw new Error(t('chat.send_failed'));
       }
 
       const data = await response.json();
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: data.reply || 'I understand. Is there anything else I can help you with?',
+        text:
+          data.reply ||
+          t('chat.default_reply'),
         sender: 'assistant',
         timestamp: new Date(),
       };
@@ -75,7 +77,7 @@ export default function ChatPage() {
     } catch (error) {
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
-        text: 'Sorry, I encountered an error. Please try again.',
+        text: t('chat.error_generic'),
         sender: 'assistant',
         timestamp: new Date(),
       };
@@ -89,18 +91,18 @@ export default function ChatPage() {
     <div className="flex flex-col h-[calc(100vh-5rem)] p-8 gap-4">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Chat</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('chat.title')}</h1>
         <p className="text-muted-foreground mt-2">
-          Internal team chat for portfolio discussions
+          {t('chat.desc')}
         </p>
       </div>
 
       {/* Chat Container */}
       <Card className="flex-1 flex flex-col">
         <CardHeader>
-          <CardTitle>Support Chat</CardTitle>
+          <CardTitle>{t('chat.card_title')}</CardTitle>
           <CardDescription>
-            Ask questions about your portfolio and get instant answers
+            {t('chat.card_desc')}
           </CardDescription>
         </CardHeader>
 
@@ -141,7 +143,7 @@ export default function ChatPage() {
           {/* Input */}
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <Input
-              placeholder="Type your message..."
+              placeholder={t('chat.placeholder')}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={isLoading}

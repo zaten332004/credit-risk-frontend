@@ -1,11 +1,11 @@
-import React from "react"
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
-import './globals.css'
-
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+import '../styles/globals.css'
+import { ThemeProvider } from '@/components/theme-provider'
+import { I18nProvider } from '@/components/i18n-provider'
+import { cookies } from 'next/headers'
+import { normalizeLocale } from '@/lib/i18n/cookies'
+import { PageTransition } from '@/components/page-transition'
 
 export const metadata: Metadata = {
   title: 'CRAI DB - Intelligent Credit Risk Analytics Platform',
@@ -30,15 +30,22 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const cookieStore = await cookies()
+  const initialLocale = normalizeLocale(cookieStore.get('locale')?.value) ?? 'vi'
+
   return (
-    <html lang="en">
+    <html lang={initialLocale} suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
-        {children}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <I18nProvider initialLocale={initialLocale}>
+            <PageTransition>{children}</PageTransition>
+          </I18nProvider>
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

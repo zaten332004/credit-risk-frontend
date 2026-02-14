@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Search, MoreHorizontal } from 'lucide-react';
+import { useI18n } from '@/components/i18n-provider';
 
 const users = [
   {
@@ -58,8 +59,24 @@ const users = [
 ];
 
 export default function AdminUsersPage() {
+  const { t } = useI18n();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+
+  const roleLabel = (role: string) => {
+    switch (role.toLowerCase()) {
+      case 'manager':
+        return t('role.manager');
+      case 'analyst':
+        return t('role.analyst');
+      case 'admin':
+        return t('role.admin');
+      case 'viewer':
+        return t('role.viewer');
+      default:
+        return role;
+    }
+  };
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch = user.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -73,25 +90,25 @@ export default function AdminUsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">User Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('admin.users.title')}</h1>
           <p className="text-muted-foreground mt-2">
-            Manage system users and permissions
+            {t('admin.users.desc')}
           </p>
         </div>
-        <Button>Add User</Button>
+        <Button>{t('admin.users.add')}</Button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { title: 'Total Users', count: users.length },
-          { title: 'Active', count: users.filter((u) => u.status === 'active').length },
-          { title: 'Managers', count: users.filter((u) => u.role === 'Manager').length },
-          { title: 'Analysts', count: users.filter((u) => u.role === 'Analyst').length },
+          { titleKey: 'admin.users.total', count: users.length },
+          { titleKey: 'common.active', count: users.filter((u) => u.status === 'active').length },
+          { titleKey: 'admin.users.managers', count: users.filter((u) => u.role === 'Manager').length },
+          { titleKey: 'admin.users.analysts', count: users.filter((u) => u.role === 'Analyst').length },
         ].map((stat, idx) => (
           <Card key={idx}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              <CardTitle className="text-sm font-medium">{t(stat.titleKey)}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{stat.count}</div>
@@ -104,16 +121,16 @@ export default function AdminUsersPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
-            <CardTitle>Users</CardTitle>
+            <CardTitle>{t('admin.users.list_title')}</CardTitle>
             <CardDescription>
-              Showing {filteredUsers.length} users
+              {t('common.showing')} {filteredUsers.length} {t('admin.users.items')}
             </CardDescription>
           </div>
           <div className="w-full md:w-64">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search users..."
+                placeholder={t('admin.users.search_ph')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
@@ -127,12 +144,12 @@ export default function AdminUsersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('common.name')}</TableHead>
+                  <TableHead>{t('common.email')}</TableHead>
+                  <TableHead>{t('common.role')}</TableHead>
+                  <TableHead>{t('common.status')}</TableHead>
+                  <TableHead>{t('admin.users.joined')}</TableHead>
+                  <TableHead className="text-right">{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -141,13 +158,13 @@ export default function AdminUsersPage() {
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{user.role}</Badge>
+                      <Badge variant="outline">{roleLabel(user.role)}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant={user.status === 'active' ? 'secondary' : 'outline'}
                       >
-                        {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                        {t(`status.${user.status}`)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -161,10 +178,10 @@ export default function AdminUsersPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem>View Activity</DropdownMenuItem>
+                          <DropdownMenuItem>{t('common.edit')}</DropdownMenuItem>
+                          <DropdownMenuItem>{t('admin.users.view_activity')}</DropdownMenuItem>
                           <DropdownMenuItem className="text-red-600">
-                            Deactivate
+                            {t('admin.users.deactivate')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

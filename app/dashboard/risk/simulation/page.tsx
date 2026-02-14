@@ -9,6 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Zap } from 'lucide-react';
+import { useI18n } from '@/components/i18n-provider';
 
 const scenarioData = [
   { change: '-50%', score: 92, riskLevel: 'low' },
@@ -20,6 +21,7 @@ const scenarioData = [
 ];
 
 export default function RiskSimulationPage() {
+  const { t } = useI18n();
   const [scenario, setScenario] = useState({
     customerName: 'Sample Customer',
     baseScore: 85,
@@ -65,13 +67,24 @@ export default function RiskSimulationPage() {
     }
   };
 
+  const riskLevelLabel = (level: string) => {
+    switch (level) {
+      case 'low':
+      case 'medium':
+      case 'high':
+        return t(`risk.level.${level}`);
+      default:
+        return level;
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8 p-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Risk Simulation</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('risk.sim.title')}</h1>
         <p className="text-muted-foreground mt-2">
-          Simulate how market conditions affect customer risk scores
+          {t('risk.sim.desc')}
         </p>
       </div>
 
@@ -79,23 +92,25 @@ export default function RiskSimulationPage() {
         {/* Simulation Form */}
         <Card>
           <CardHeader>
-            <CardTitle>Scenario Setup</CardTitle>
+            <CardTitle>{t('risk.sim.card_title')}</CardTitle>
             <CardDescription>
-              Adjust parameters to see how risk scores change
+              {t('risk.sim.card_desc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label>Customer: {scenario.customerName}</Label>
+              <Label>{t('risk.sim.customer')}: {scenario.customerName}</Label>
               <div className="bg-secondary p-3 rounded-lg">
-                <p className="text-sm font-medium">Base Risk Score: {scenario.baseScore}</p>
+                <p className="text-sm font-medium">{t('risk.sim.base_score')}: {scenario.baseScore}</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label>Income Change: {scenario.incomeChange > 0 ? '+' : ''}{scenario.incomeChange}%</Label>
+                  <Label>
+                    {t('risk.sim.income_change')}: {scenario.incomeChange > 0 ? '+' : ''}{scenario.incomeChange}%
+                  </Label>
                 </div>
                 <Slider
                   value={[scenario.incomeChange]}
@@ -109,7 +124,9 @@ export default function RiskSimulationPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label>Debt Change: {scenario.debtChange > 0 ? '+' : ''}{scenario.debtChange}%</Label>
+                  <Label>
+                    {t('risk.sim.debt_change')}: {scenario.debtChange > 0 ? '+' : ''}{scenario.debtChange}%
+                  </Label>
                 </div>
                 <Slider
                   value={[scenario.debtChange]}
@@ -123,7 +140,9 @@ export default function RiskSimulationPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label>Interest Rate Change: {scenario.interestRateChange > 0 ? '+' : ''}{scenario.interestRateChange}%</Label>
+                  <Label>
+                    {t('risk.sim.rate_change')}: {scenario.interestRateChange > 0 ? '+' : ''}{scenario.interestRateChange}%
+                  </Label>
                 </div>
                 <Slider
                   value={[scenario.interestRateChange]}
@@ -138,7 +157,7 @@ export default function RiskSimulationPage() {
 
             <Button onClick={handleSimulate} className="w-full" size="lg">
               <Zap className="mr-2 h-4 w-4" />
-              Run Simulation
+              {t('risk.sim.run')}
             </Button>
           </CardContent>
         </Card>
@@ -147,34 +166,34 @@ export default function RiskSimulationPage() {
         {simulationResult && (
           <Card>
             <CardHeader>
-              <CardTitle>Simulation Result</CardTitle>
+              <CardTitle>{t('risk.sim.result_title')}</CardTitle>
               <CardDescription>
-                Impact of scenario on risk score
+                {t('risk.sim.result_desc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Base Score</p>
+                  <p className="text-sm text-muted-foreground">{t('risk.sim.base_score_short')}</p>
                   <p className="text-2xl font-bold mt-1">{simulationResult.baseScore}</p>
                 </div>
 
                 <div className="border-t pt-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">Adjusted Score</p>
+                      <p className="text-sm text-muted-foreground">{t('risk.sim.adjusted_score')}</p>
                       <p className="text-3xl font-bold mt-1 text-accent">
                         {simulationResult.adjustedScore}
                       </p>
                     </div>
                     <Badge variant={getRiskBadgeVariant(simulationResult.riskLevel)} className="text-lg px-4 py-2">
-                      {simulationResult.riskLevel.toUpperCase()}
+                      {riskLevelLabel(simulationResult.riskLevel)}
                     </Badge>
                   </div>
 
                   <div className="mt-4 text-sm">
                     <p className="text-muted-foreground">
-                      Change: {parseFloat(simulationResult.adjustedScore) - simulationResult.baseScore > 0 ? '+' : ''}
+                      {t('common.change')}: {parseFloat(simulationResult.adjustedScore) - simulationResult.baseScore > 0 ? '+' : ''}
                       {(parseFloat(simulationResult.adjustedScore) - simulationResult.baseScore).toFixed(1)}
                     </p>
                   </div>
@@ -182,11 +201,11 @@ export default function RiskSimulationPage() {
               </div>
 
               <div className="bg-secondary p-4 rounded-lg space-y-2">
-                <p className="text-sm font-medium">Impact Breakdown:</p>
+                <p className="text-sm font-medium">{t('risk.sim.breakdown')}</p>
                 <div className="text-sm text-muted-foreground space-y-1">
-                  <p>• Income change: {simulationResult.changes.income > 0 ? '+' : ''}{simulationResult.changes.income}%</p>
-                  <p>• Debt change: {simulationResult.changes.debt > 0 ? '+' : ''}{simulationResult.changes.debt}%</p>
-                  <p>• Interest rate: {simulationResult.changes.interestRate > 0 ? '+' : ''}{simulationResult.changes.interestRate}%</p>
+                  <p>• {t('risk.sim.income_change')}: {simulationResult.changes.income > 0 ? '+' : ''}{simulationResult.changes.income}%</p>
+                  <p>• {t('risk.sim.debt_change')}: {simulationResult.changes.debt > 0 ? '+' : ''}{simulationResult.changes.debt}%</p>
+                  <p>• {t('risk.sim.rate_change')}: {simulationResult.changes.interestRate > 0 ? '+' : ''}{simulationResult.changes.interestRate}%</p>
                 </div>
               </div>
             </CardContent>
@@ -197,9 +216,9 @@ export default function RiskSimulationPage() {
       {/* Sensitivity Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Score Sensitivity Analysis</CardTitle>
+          <CardTitle>{t('risk.sim.sensitivity_title')}</CardTitle>
           <CardDescription>
-            How income changes affect risk score (holding other factors constant)
+            {t('risk.sim.sensitivity_desc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -215,7 +234,7 @@ export default function RiskSimulationPage() {
                 dataKey="score"
                 stroke="#06b6d4"
                 strokeWidth={2}
-                name="Risk Score"
+                name={t('customers.risk_score')}
               />
             </LineChart>
           </ResponsiveContainer>

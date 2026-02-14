@@ -1,4 +1,5 @@
 import { Github, FileText, Mail } from "lucide-react";
+import { useI18n } from "@/components/i18n-provider";
 
 const technologies = [
   "SQL Server",
@@ -12,15 +13,16 @@ const technologies = [
 ];
 
 const links = [
-  { href: "#architecture", label: "Architecture" },
-  { href: "#features", label: "Features" },
-  { href: "#technology", label: "Technology" },
-  { href: "#demo", label: "Demo" },
-  { href: "#use-cases", label: "Use Cases" },
-  { href: "#about", label: "About" },
-];
+  { href: "#architecture", key: "nav.architecture" },
+  { href: "#features", key: "nav.features" },
+  { href: "#technology", key: "nav.technology" },
+  { href: "#demo", key: "nav.demo" },
+  { href: "#use-cases", key: "nav.use_cases" },
+  { href: "#about", key: "nav.about" },
+] as const;
 
 export function Footer() {
+  const { t } = useI18n();
   return (
     <footer className="py-16 bg-card border-t border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -34,8 +36,7 @@ export function Footer() {
               <span className="font-semibold text-lg text-foreground">CRAI DB</span>
             </div>
             <p className="text-muted-foreground mb-4 max-w-md text-pretty">
-              Intelligent Credit Risk Analytics Platform - Combining machine learning, 
-              explainable AI, and modern cloud infrastructure for smarter credit decisions.
+              {t("home.footer.desc")}
             </p>
             <div className="flex gap-4">
               <a
@@ -61,7 +62,7 @@ export function Footer() {
 
           {/* Navigation */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Navigation</h4>
+            <h4 className="font-semibold text-foreground mb-4">{t("home.footer.nav")}</h4>
             <ul className="space-y-2">
               {links.map((link) => (
                 <li key={link.href}>
@@ -69,7 +70,7 @@ export function Footer() {
                     href={link.href}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {link.label}
+                    {t(link.key)}
                   </a>
                 </li>
               ))}
@@ -78,7 +79,7 @@ export function Footer() {
 
           {/* Technologies */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Technologies</h4>
+            <h4 className="font-semibold text-foreground mb-4">{t("home.footer.tech")}</h4>
             <div className="flex flex-wrap gap-2">
               {technologies.map((tech) => (
                 <span
@@ -95,10 +96,10 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            CRAI DB - Credit Risk Analysis Intelligent Database
+            {t("home.footer.bottom1")}
           </p>
           <p className="text-sm text-muted-foreground">
-            Academic & Research Project
+            {t("home.footer.bottom2")}
           </p>
         </div>
       </div>

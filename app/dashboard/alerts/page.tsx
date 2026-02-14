@@ -21,43 +21,44 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { useI18n } from '@/components/i18n-provider';
 
 const alerts = [
   {
     id: '1',
-    type: 'High Risk Score',
+    typeKey: 'alerts.type.high_risk_score',
     customer: 'CUST-001',
     severity: 'critical',
     status: 'open',
     createdAt: '2024-02-05 10:30 AM',
-    description: 'Risk score increased to 35',
+    descriptionKey: 'alerts.desc.score_increased_35',
   },
   {
     id: '2',
-    type: 'Default Risk',
+    typeKey: 'alerts.type.default_risk',
     customer: 'CUST-045',
     severity: 'high',
     status: 'open',
     createdAt: '2024-02-04 02:15 PM',
-    description: 'Customer has missed 2 payments',
+    descriptionKey: 'alerts.desc.missed_2_payments',
   },
   {
     id: '3',
-    type: 'Policy Change',
+    typeKey: 'alerts.type.policy_change',
     customer: 'CUST-089',
     severity: 'medium',
     status: 'resolved',
     createdAt: '2024-02-03 08:45 AM',
-    description: 'Regulation update requires review',
+    descriptionKey: 'alerts.desc.reg_update_review',
   },
   {
     id: '4',
-    type: 'Score Improvement',
+    typeKey: 'alerts.type.score_improvement',
     customer: 'CUST-102',
     severity: 'low',
     status: 'resolved',
     createdAt: '2024-02-02 06:20 PM',
-    description: 'Risk score improved to 82',
+    descriptionKey: 'alerts.desc.score_improved_82',
   },
 ];
 
@@ -90,6 +91,7 @@ const getStatusIcon = (status: string) => {
 };
 
 export default function AlertsPage() {
+  const { t } = useI18n();
   const [filter, setFilter] = useState<string>('all');
 
   const filteredAlerts = alerts.filter((alert) => {
@@ -102,27 +104,27 @@ export default function AlertsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Alerts</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('alerts.title')}</h1>
           <p className="text-muted-foreground mt-2">
-            Monitor and manage portfolio alerts and notifications
+            {t('alerts.desc')}
           </p>
         </div>
         <Badge variant="destructive" className="text-lg px-4 py-2">
-          {alerts.filter((a) => a.status === 'open').length} Open
+          {alerts.filter((a) => a.status === 'open').length} {t('status.open')}
         </Badge>
       </div>
 
       {/* Alerts Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { title: 'Total Alerts', count: alerts.length, variant: 'outline' as const },
-          { title: 'Open', count: alerts.filter((a) => a.status === 'open').length, variant: 'destructive' as const },
-          { title: 'Resolved', count: alerts.filter((a) => a.status === 'resolved').length, variant: 'secondary' as const },
-          { title: 'Critical', count: alerts.filter((a) => a.severity === 'critical').length, variant: 'destructive' as const },
+          { titleKey: 'alerts.total', count: alerts.length, variant: 'outline' as const },
+          { titleKey: 'status.open', count: alerts.filter((a) => a.status === 'open').length, variant: 'destructive' as const },
+          { titleKey: 'status.resolved', count: alerts.filter((a) => a.status === 'resolved').length, variant: 'secondary' as const },
+          { titleKey: 'severity.critical', count: alerts.filter((a) => a.severity === 'critical').length, variant: 'destructive' as const },
         ].map((item, idx) => (
           <Card key={idx}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">{item.title}</CardTitle>
+              <CardTitle className="text-sm font-medium">{t(item.titleKey)}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{item.count}</div>
@@ -135,9 +137,9 @@ export default function AlertsPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
-            <CardTitle>Active Alerts</CardTitle>
+            <CardTitle>{t('alerts.active')}</CardTitle>
             <CardDescription>
-              Showing {filteredAlerts.length} alerts
+              {t('common.showing')} {filteredAlerts.length} {t('alerts.items')}
             </CardDescription>
           </div>
           <Select value={filter} onValueChange={setFilter}>
@@ -145,10 +147,10 @@ export default function AlertsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Alerts</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="resolved">Resolved</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              <SelectItem value="open">{t('status.open')}</SelectItem>
+              <SelectItem value="resolved">{t('status.resolved')}</SelectItem>
+              <SelectItem value="pending">{t('status.pending')}</SelectItem>
             </SelectContent>
           </Select>
         </CardHeader>
@@ -158,12 +160,12 @@ export default function AlertsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead></TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Severity</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('alerts.type')}</TableHead>
+                  <TableHead>{t('alerts.customer')}</TableHead>
+                  <TableHead>{t('alerts.severity')}</TableHead>
+                  <TableHead>{t('common.status')}</TableHead>
+                  <TableHead>{t('common.date')}</TableHead>
+                  <TableHead className="text-right">{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -172,26 +174,26 @@ export default function AlertsPage() {
                     <TableCell>{getStatusIcon(alert.status)}</TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{alert.type}</p>
-                        <p className="text-sm text-muted-foreground">{alert.description}</p>
+                        <p className="font-medium">{t(alert.typeKey)}</p>
+                        <p className="text-sm text-muted-foreground">{t(alert.descriptionKey)}</p>
                       </div>
                     </TableCell>
                     <TableCell>{alert.customer}</TableCell>
                     <TableCell>
                       <Badge variant={getSeverityVariant(alert.severity)}>
-                        {alert.severity.charAt(0).toUpperCase() + alert.severity.slice(1)}
+                        {t(`severity.${alert.severity}`)}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant={alert.status === 'open' ? 'destructive' : 'secondary'}>
-                        {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
+                        {t(`status.${alert.status}`)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{alert.createdAt}</TableCell>
                     <TableCell className="text-right">
                       {alert.status === 'open' && (
                         <Button variant="ghost" size="sm" className="text-accent hover:text-accent">
-                          Resolve
+                          {t('alerts.resolve')}
                         </Button>
                       )}
                     </TableCell>

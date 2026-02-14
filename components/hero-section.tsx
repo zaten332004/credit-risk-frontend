@@ -2,8 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, BarChart3, MessageSquare, Layers } from "lucide-react";
+import { useI18n } from "@/components/i18n-provider";
 
 export function HeroSection() {
+  const { t } = useI18n();
   return (
     <section className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden">
       {/* Background gradient effect */}
@@ -18,35 +20,34 @@ export function HeroSection() {
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border mb-8">
             <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
             <span className="text-sm text-muted-foreground">
-              Credit Risk Analysis & Smart Dashboard
+              {t("home.hero.badge")}
             </span>
           </div>
 
           {/* Heading */}
           <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight text-foreground mb-6 text-balance">
-            Intelligent Credit Risk
+            {t("home.hero.title_1")}
             <br />
-            <span className="text-accent">Analytics Platform</span>
+            <span className="text-accent">{t("home.hero.title_2")}</span>
           </h1>
 
           {/* Description */}
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed text-pretty">
-            CRAI DB delivers automated, explainable, and real-time credit risk analysis 
-            powered by machine learning, interactive dashboards, and conversational AI.
+            {t("home.hero.desc")}
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <Button size="lg" className="gap-2 w-full sm:w-auto">
-              View Architecture
+              {t("home.hero.cta.arch")}
               <ArrowRight className="w-4 h-4" />
             </Button>
             <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto bg-transparent">
               <Play className="w-4 h-4" />
-              Explore Dashboard
+              {t("home.hero.cta.dashboard")}
             </Button>
             <Button size="lg" variant="ghost" className="gap-2 w-full sm:w-auto">
-              Try Chatbot Demo
+              {t("home.hero.cta.chatbot")}
             </Button>
           </div>
 
@@ -54,15 +55,15 @@ export function HeroSection() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
             <div className="flex items-center justify-center gap-3 p-4 rounded-lg bg-secondary/50 border border-border">
               <BarChart3 className="w-5 h-5 text-accent" />
-              <span className="text-sm text-foreground">ML-Powered Scoring</span>
+              <span className="text-sm text-foreground">{t("home.hero.hl.ml")}</span>
             </div>
             <div className="flex items-center justify-center gap-3 p-4 rounded-lg bg-secondary/50 border border-border">
               <Layers className="w-5 h-5 text-accent" />
-              <span className="text-sm text-foreground">SHAP Explainability</span>
+              <span className="text-sm text-foreground">{t("home.hero.hl.shap")}</span>
             </div>
             <div className="flex items-center justify-center gap-3 p-4 rounded-lg bg-secondary/50 border border-border">
               <MessageSquare className="w-5 h-5 text-accent" />
-              <span className="text-sm text-foreground">LLM Chatbot</span>
+              <span className="text-sm text-foreground">{t("home.hero.hl.llm")}</span>
             </div>
           </div>
         </div>

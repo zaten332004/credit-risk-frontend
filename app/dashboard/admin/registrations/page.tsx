@@ -22,6 +22,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { authJsonHeaders } from '@/lib/auth/token';
+import { useI18n } from '@/components/i18n-provider';
 
 const pendingRegistrations = [
   {
@@ -51,6 +53,7 @@ const pendingRegistrations = [
 ];
 
 export default function AdminRegistrationsPage() {
+  const { t } = useI18n();
   const [registrations, setRegistrations] = useState(pendingRegistrations);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
@@ -68,10 +71,7 @@ export default function AdminRegistrationsPage() {
     try {
       const response = await fetch('/api/v1/admin/manager-registrations/decision', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
+        headers: authJsonHeaders(),
         body: JSON.stringify({
           registration_id: selectedId,
           approved: action === 'approve',
@@ -98,9 +98,9 @@ export default function AdminRegistrationsPage() {
     <div className="flex flex-col gap-8 p-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Pending Registrations</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('admin.reg.title')}</h1>
         <p className="text-muted-foreground mt-2">
-          Review and approve new user registrations
+          {t('admin.reg.desc')}
         </p>
       </div>
 
@@ -109,7 +109,7 @@ export default function AdminRegistrationsPage() {
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            You have {registrations.length} pending registration{registrations.length !== 1 ? 's' : ''} to review
+            {t('admin.reg.pending_prefix')} {registrations.length} {t('admin.reg.pending_suffix')}
           </AlertDescription>
         </Alert>
       )}
@@ -117,29 +117,29 @@ export default function AdminRegistrationsPage() {
       {/* Registrations Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Pending Applications</CardTitle>
+          <CardTitle>{t('admin.reg.list_title')}</CardTitle>
           <CardDescription>
-            {registrations.length} waiting for approval
+            {registrations.length} {t('admin.reg.waiting')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {registrations.length === 0 ? (
             <div className="text-center py-12">
               <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
-              <p className="text-foreground font-medium">No pending registrations</p>
-              <p className="text-muted-foreground mt-1">All applications have been processed</p>
+              <p className="text-foreground font-medium">{t('admin.reg.none_title')}</p>
+              <p className="text-muted-foreground mt-1">{t('admin.reg.none_desc')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Company</TableHead>
-                    <TableHead>Requested</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('common.name')}</TableHead>
+                    <TableHead>{t('common.email')}</TableHead>
+                    <TableHead>{t('admin.reg.type')}</TableHead>
+                    <TableHead>{t('common.company')}</TableHead>
+                    <TableHead>{t('admin.reg.requested')}</TableHead>
+                    <TableHead className="text-right">{t('common.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -149,7 +149,7 @@ export default function AdminRegistrationsPage() {
                       <TableCell>{reg.email}</TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {reg.type.charAt(0).toUpperCase() + reg.type.slice(1)}
+                          {t(`role.${reg.type}`)}
                         </Badge>
                       </TableCell>
                       <TableCell>{reg.company}</TableCell>
@@ -163,7 +163,7 @@ export default function AdminRegistrationsPage() {
                           onClick={() => handleAction(reg.id, 'approve')}
                         >
                           <CheckCircle className="h-4 w-4 mr-1" />
-                          Approve
+                          {t('common.approve')}
                         </Button>
                         <Button
                           size="sm"
@@ -172,7 +172,7 @@ export default function AdminRegistrationsPage() {
                           onClick={() => handleAction(reg.id, 'reject')}
                         >
                           <XCircle className="h-4 w-4 mr-1" />
-                          Reject
+                          {t('common.reject')}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -189,27 +189,34 @@ export default function AdminRegistrationsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {action === 'approve' ? 'Approve Registration' : 'Reject Registration'}
+              {action === 'approve' ? t('admin.reg.dialog_approve_title') : t('admin.reg.dialog_reject_title')}
             </DialogTitle>
             <DialogDescription>
               {registration && (
                 <>
-                  {action === 'approve'
-                    ? `Are you sure you want to approve ${registration.name}'s registration as a ${registration.type}?`
-                    : `Are you sure you want to reject ${registration.name}'s registration?`}
+                  {action === 'approve' ? (
+                    <>
+                      {t('admin.reg.dialog_approve_prefix')} {registration.name}{' '}
+                      {t('admin.reg.dialog_approve_mid')} {t(`role.${registration.type}`)}?
+                    </>
+                  ) : (
+                    <>
+                      {t('admin.reg.dialog_reject_prefix')} {registration.name}?
+                    </>
+                  )}
                 </>
               )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               variant={action === 'approve' ? 'default' : 'destructive'}
               onClick={confirmAction}
             >
-              {action === 'approve' ? 'Approve' : 'Reject'}
+              {action === 'approve' ? t('common.approve') : t('common.reject')}
             </Button>
           </DialogFooter>
         </DialogContent>

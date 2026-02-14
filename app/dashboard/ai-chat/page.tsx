@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Send, Loader2 } from 'lucide-react';
+import { authJsonHeaders } from '@/lib/auth/token';
+import { useI18n } from '@/components/i18n-provider';
 
 interface Message {
   id: string;
@@ -17,10 +19,11 @@ interface Message {
 }
 
 export default function AIChatPage() {
+  const { t } = useI18n();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Hello! I\'m your AI assistant for credit risk analysis. I can help you analyze portfolios, explain risk scores, and answer questions about your data. How can I assist you?',
+      text: t('ai_chat.initial_message'),
       sender: 'assistant',
       timestamp: new Date(),
     },
@@ -53,22 +56,19 @@ export default function AIChatPage() {
     try {
       const response = await fetch('/api/v1/ai-chat/send', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
+        headers: authJsonHeaders(),
         body: JSON.stringify({ message: input }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        throw new Error(t('ai_chat.send_failed'));
       }
 
       const data = await response.json();
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: data.response || 'I understand. Can you provide more details?',
+        text: data.response || t('ai_chat.default_reply'),
         sender: 'assistant',
         timestamp: new Date(),
         sources: data.sources,
@@ -78,7 +78,7 @@ export default function AIChatPage() {
     } catch (error) {
       const errorMessage: Message = {
         id: (Date.now() + 2).toString(),
-        text: 'Sorry, I encountered an error processing your request. Please try again.',
+        text: t('ai_chat.error_generic'),
         sender: 'assistant',
         timestamp: new Date(),
       };
@@ -92,18 +92,18 @@ export default function AIChatPage() {
     <div className="flex flex-col h-[calc(100vh-5rem)] p-8 gap-4">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">AI Chat</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('ai_chat.title')}</h1>
         <p className="text-muted-foreground mt-2">
-          Powered by advanced AI - Ask questions about your credit risk data
+          {t('ai_chat.desc')}
         </p>
       </div>
 
       {/* Chat Container */}
       <Card className="flex-1 flex flex-col">
         <CardHeader>
-          <CardTitle>Gemini-Powered Analysis</CardTitle>
+          <CardTitle>{t('ai_chat.card_title')}</CardTitle>
           <CardDescription>
-            Get intelligent insights about your portfolio and customers
+            {t('ai_chat.card_desc')}
           </CardDescription>
         </CardHeader>
 
@@ -157,10 +157,10 @@ export default function AIChatPage() {
           {messages.length === 1 && (
             <div className="grid grid-cols-2 gap-2 mb-4">
               {[
-                'What is my portfolio risk?',
-                'Who are my high-risk customers?',
-                'Analyze income distribution',
-                'Show sector breakdown',
+                t('ai_chat.prompt_1'),
+                t('ai_chat.prompt_2'),
+                t('ai_chat.prompt_3'),
+                t('ai_chat.prompt_4'),
               ].map((prompt, idx) => (
                 <Button
                   key={idx}
@@ -180,7 +180,7 @@ export default function AIChatPage() {
           {/* Input */}
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <Input
-              placeholder="Ask me about your credit risk data..."
+              placeholder={t('ai_chat.placeholder')}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={isLoading}

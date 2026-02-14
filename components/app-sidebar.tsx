@@ -30,6 +30,11 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
+import { clearAccessToken } from '@/lib/auth/token';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { getUserRole, type UserRole } from '@/lib/auth/token';
+import { LanguageToggle } from '@/components/language-toggle';
+import { useI18n } from '@/components/i18n-provider';
 
 import {
   LayoutDashboard,
@@ -48,103 +53,103 @@ import {
 
 const navigationItems = [
   {
-    title: 'Dashboard',
+    titleKey: 'sidebar.dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
   },
   {
-    title: 'Customers',
-    href: '/customers',
+    titleKey: 'sidebar.customers',
+    href: '/dashboard/customers',
     icon: Users,
   },
   {
-    title: 'Risk Management',
+    titleKey: 'sidebar.risk',
     icon: TrendingUp,
     items: [
       {
-        title: 'Score',
-        href: '/risk/score',
+        titleKey: 'sidebar.risk.score',
+        href: '/dashboard/risk/score',
       },
       {
-        title: 'Analyze',
-        href: '/risk/analyze',
+        titleKey: 'sidebar.risk.analyze',
+        href: '/dashboard/risk/analyze',
       },
       {
-        title: 'Batch Processing',
-        href: '/risk/batch',
+        titleKey: 'sidebar.risk.batch',
+        href: '/dashboard/risk/batch',
       },
       {
-        title: 'Simulation',
-        href: '/risk/simulation',
+        titleKey: 'sidebar.risk.simulation',
+        href: '/dashboard/risk/simulation',
       },
       {
-        title: 'Model Explainability',
-        href: '/risk/explain',
+        titleKey: 'sidebar.risk.explain',
+        href: '/dashboard/risk/explain',
       },
     ],
   },
   {
-    title: 'Portfolio',
+    titleKey: 'sidebar.portfolio',
     icon: PieChart,
     items: [
       {
-        title: 'Overview',
-        href: '/portfolio/overview',
+        titleKey: 'sidebar.portfolio.overview',
+        href: '/dashboard/portfolio/overview',
       },
       {
-        title: 'Risk Distribution',
-        href: '/portfolio/risk-distribution',
+        titleKey: 'sidebar.portfolio.risk_distribution',
+        href: '/dashboard/portfolio/risk-distribution',
       },
       {
-        title: 'Concentration',
-        href: '/portfolio/concentration',
+        titleKey: 'sidebar.portfolio.concentration',
+        href: '/dashboard/portfolio/concentration',
       },
       {
-        title: 'Trends',
-        href: '/portfolio/trends',
+        titleKey: 'sidebar.portfolio.trends',
+        href: '/dashboard/portfolio/trends',
       },
       {
-        title: 'Compare',
-        href: '/portfolio/compare',
+        titleKey: 'sidebar.portfolio.compare',
+        href: '/dashboard/portfolio/compare',
       },
     ],
   },
   {
-    title: 'Chat',
-    href: '/chat',
+    titleKey: 'sidebar.chat',
+    href: '/dashboard/chat',
     icon: MessageSquare,
   },
   {
-    title: 'AI Chat',
-    href: '/ai-chat',
+    titleKey: 'sidebar.ai_chat',
+    href: '/dashboard/ai-chat',
     icon: Zap,
   },
   {
-    title: 'Power BI',
-    href: '/powerbi/config',
+    titleKey: 'sidebar.powerbi',
+    href: '/dashboard/powerbi/config',
     icon: BarChart3,
   },
   {
-    title: 'Alerts',
-    href: '/alerts',
+    titleKey: 'sidebar.alerts',
+    href: '/dashboard/alerts',
     icon: AlertCircle,
   },
   {
-    title: 'Data Upload',
-    href: '/upload',
+    titleKey: 'sidebar.upload',
+    href: '/dashboard/upload',
     icon: Upload,
   },
 ];
 
 const adminItems = [
   {
-    title: 'User Management',
-    href: '/admin/users',
+    titleKey: 'sidebar.admin.users',
+    href: '/dashboard/admin/users',
     icon: Users,
   },
   {
-    title: 'Registrations',
-    href: '/admin/registrations',
+    titleKey: 'sidebar.admin.registrations',
+    href: '/dashboard/admin/registrations',
     icon: AlertCircle,
   },
 ];
@@ -152,10 +157,16 @@ const adminItems = [
 export function AppSidebar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useI18n();
   const [openItems, setOpenItems] = React.useState<string[]>([]);
+  const [role, setRole] = React.useState<UserRole | null>(null);
+
+  React.useEffect(() => {
+    setRole(getUserRole());
+  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('accessToken');
+    clearAccessToken();
     router.push('/auth/login');
   };
 
@@ -166,13 +177,15 @@ export function AppSidebar() {
   };
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+  const isAdmin = role === 'admin';
+  const isViewer = role === 'viewer';
 
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Image
-            src="/logo.png"
+            src="/logo.svg"
             alt="CRAI DB"
             width={32}
             height={32}
@@ -183,36 +196,48 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarMenu>
-          {navigationItems.map((item) => {
+          {navigationItems
+            .filter((item) => {
+              if (isViewer) {
+                if (item.href === '/dashboard/upload') return false;
+                if (item.href === '/dashboard/customers') return true;
+                if (item.titleKey === 'sidebar.risk') return true;
+              }
+              return true;
+            })
+            .map((item) => {
             if (item.items) {
+              const filteredSubItems = isViewer
+                ? item.items.filter((subItem) => !subItem.href.includes('/batch'))
+                : item.items;
               return (
                 <Collapsible
-                  key={item.title}
-                  open={openItems.includes(item.title)}
-                  onOpenChange={() => toggleItem(item.title)}
+                  key={item.titleKey}
+                  open={openItems.includes(item.titleKey)}
+                  onOpenChange={() => toggleItem(item.titleKey)}
                   className="group/collapsible"
                 >
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton
                         className="data-[state=open]:bg-sidebar-accent"
-                        tooltip={item.title}
+                        tooltip={t(item.titleKey)}
                       >
                         <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
+                        <span>{t(item.titleKey)}</span>
                         <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {item.items.map((subItem) => (
+                        {filteredSubItems.map((subItem) => (
                           <SidebarMenuSubItem key={subItem.href}>
                             <SidebarMenuSubButton
                               asChild
                               isActive={isActive(subItem.href)}
                             >
                               <Link href={subItem.href}>
-                                <span>{subItem.title}</span>
+                                <span>{t(subItem.titleKey)}</span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
@@ -229,11 +254,11 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   asChild
                   isActive={isActive(item.href)}
-                  tooltip={item.title}
+                  tooltip={t(item.titleKey)}
                 >
                   <Link href={item.href}>
                     <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
+                    <span>{t(item.titleKey)}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -242,29 +267,31 @@ export function AppSidebar() {
         </SidebarMenu>
 
         {/* Admin Section */}
-        <div className="mt-8 pt-6 border-t border-sidebar-border">
-          <div className="px-3 py-2">
-            <h3 className="text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
-              Admin
-            </h3>
+        {isAdmin && (
+          <div className="mt-8 pt-6 border-t border-sidebar-border">
+            <div className="px-3 py-2">
+              <h3 className="text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
+                {t("sidebar.admin")}
+              </h3>
+            </div>
+            <SidebarMenu>
+              {adminItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.href)}
+                    tooltip={t(item.titleKey)}
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{t(item.titleKey)}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
           </div>
-          <SidebarMenu>
-            {adminItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isActive(item.href)}
-                  tooltip={item.title}
-                >
-                  <Link href={item.href}>
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </div>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-4">
@@ -272,20 +299,28 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton tooltip="Settings">
+                <SidebarMenuButton tooltip={t("sidebar.settings")}>
                   <Settings className="h-4 w-4" />
-                  <span>Settings</span>
+                  <span>{t("sidebar.settings")}</span>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" className="w-56">
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center justify-between">
+                  <span>{t("nav.theme")}</span>
+                  <ThemeToggle variant="outline" />
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex items-center justify-between">
+                  <span>{t("nav.language")}</span>
+                  <LanguageToggle variant="outline" />
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/profile">
-                    <span>Profile Settings</span>
+                  <Link href="/dashboard/profile">
+                    <span>{t("sidebar.profile")}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
+                  <span>{t("sidebar.logout")}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -7,6 +7,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Upload, CheckCircle, AlertCircle, File } from 'lucide-react';
+import { authHeaders } from '@/lib/auth/token';
+import { getUserRole } from '@/lib/auth/token';
+import { useI18n } from '@/components/i18n-provider';
 
 const uploadHistory = [
   {
@@ -36,6 +39,9 @@ const uploadHistory = [
 ];
 
 export default function UploadPage() {
+  const { t } = useI18n();
+  const role = getUserRole();
+  const isViewer = role === 'viewer';
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -68,6 +74,7 @@ export default function UploadPage() {
 
   const handleUpload = async () => {
     if (!file) return;
+    if (isViewer) return;
 
     setIsUploading(true);
     setUploadProgress(0);
@@ -78,9 +85,7 @@ export default function UploadPage() {
 
       const response = await fetch('/api/v1/upload/data', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
+        headers: authHeaders(),
         body: formData,
       });
 
@@ -108,20 +113,29 @@ export default function UploadPage() {
     <div className="flex flex-col gap-8 p-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Data Upload</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('upload.title')}</h1>
         <p className="text-muted-foreground mt-2">
-          Upload customer and portfolio data to update your records
+          {t('upload.desc')}
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Upload Area */}
         <div className="lg:col-span-2 space-y-6">
+          {isViewer && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {t('upload.viewer_notice_prefix')}{' '}
+                <span className="font-medium">{t('role.viewer')}</span>. {t('upload.viewer_notice_suffix')}
+              </AlertDescription>
+            </Alert>
+          )}
           <Card>
             <CardHeader>
-              <CardTitle>Upload Data</CardTitle>
+              <CardTitle>{t('upload.card_title')}</CardTitle>
               <CardDescription>
-                Support CSV and Excel files up to 10MB
+                {t('upload.card_desc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -139,15 +153,15 @@ export default function UploadPage() {
                   onChange={handleFileChange}
                   accept=".csv,.xlsx,.xls"
                   className="hidden"
-                  disabled={isUploading}
+                  disabled={isUploading || isViewer}
                 />
                 <label htmlFor="file-upload" className="cursor-pointer">
                   <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <p className="text-lg font-medium">
-                    {file ? file.name : 'Click to upload or drag and drop'}
+                    {file ? file.name : t('upload.drop_prompt')}
                   </p>
                   <p className="text-sm text-muted-foreground mt-2">
-                    CSV, Excel • Max 10MB
+                    {t('upload.drop_meta')}
                   </p>
                 </label>
               </div>
@@ -167,17 +181,17 @@ export default function UploadPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setFile(null)}
-                      disabled={isUploading}
-                    >
-                      Remove
+                    onClick={() => setFile(null)}
+                    disabled={isUploading}
+                  >
+                      {t('common.remove')}
                     </Button>
                   </div>
 
                   {isUploading && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Uploading...</span>
+                        <span className="text-sm font-medium">{t('common.uploading')}</span>
                         <span className="text-sm text-muted-foreground">{uploadProgress}%</span>
                       </div>
                       <Progress value={uploadProgress} />
@@ -186,11 +200,11 @@ export default function UploadPage() {
 
                   <Button
                     onClick={handleUpload}
-                    disabled={isUploading}
+                    disabled={isUploading || isViewer}
                     className="w-full"
                     size="lg"
                   >
-                    {isUploading ? 'Uploading...' : 'Upload File'}
+                    {isUploading ? t('common.uploading') : t('upload.upload_file')}
                   </Button>
                 </div>
               )}
@@ -199,7 +213,7 @@ export default function UploadPage() {
                 <Alert className="mt-6">
                   <CheckCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Successfully uploaded {uploadResult.records_processed || 0} records
+                    {t('upload.success_prefix')} {uploadResult.records_processed || 0} {t('upload.success_suffix')}
                   </AlertDescription>
                 </Alert>
               )}
@@ -209,7 +223,7 @@ export default function UploadPage() {
           {/* Format Guide */}
           <Card>
             <CardHeader>
-              <CardTitle>CSV Format Guide</CardTitle>
+              <CardTitle>{t('upload.csv_guide')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="bg-secondary p-4 rounded-lg font-mono text-sm space-y-2">
@@ -224,9 +238,9 @@ export default function UploadPage() {
         {/* History Sidebar */}
         <Card>
           <CardHeader>
-            <CardTitle>Upload History</CardTitle>
+            <CardTitle>{t('upload.history_title')}</CardTitle>
             <CardDescription>
-              Recent uploads and imports
+              {t('upload.history_desc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -242,11 +256,13 @@ export default function UploadPage() {
                   </div>
                   <Badge variant="secondary" className="shrink-0">
                     {item.status === 'completed' && <CheckCircle className="h-3 w-3 mr-1" />}
-                    {item.status === 'completed' && 'Done'}
+                    {item.status === 'completed' && t('common.done')}
                   </Badge>
                 </div>
                 <div className="text-xs text-muted-foreground space-y-1">
-                  <p>{item.records} records</p>
+                  <p>
+                    {item.records} {t('common.records')}
+                  </p>
                   <p>{item.uploadedAt}</p>
                 </div>
               </div>

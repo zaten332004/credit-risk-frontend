@@ -12,13 +12,14 @@ import { DemoSection } from "@/components/demo-section";
 import { UseCasesSection } from "@/components/use-cases-section";
 import { AboutSection } from "@/components/about-section";
 import { Footer } from "@/components/footer";
+import { getAccessToken } from "@/lib/auth/token";
 
 export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
     // Check if user is authenticated
-    const token = localStorage.getItem('accessToken');
+    const token = getAccessToken();
     if (token) {
       router.push('/dashboard');
     }

@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Plus } from 'lucide-react';
+import { getUserRole } from '@/lib/auth/token';
+import { useI18n } from '@/components/i18n-provider';
 
 const getRiskBadge = (level: string) => {
   const variants: Record<string, 'default' | 'destructive' | 'outline' | 'secondary'> = {
@@ -34,6 +36,9 @@ const getRiskBadge = (level: string) => {
 };
 
 export default function CustomersPage() {
+  const { t } = useI18n();
+  const role = getUserRole();
+  const isViewer = role === 'viewer';
   const [customers, setCustomers] = useState([
     {
       id: '1',
@@ -73,6 +78,19 @@ export default function CustomersPage() {
   const [riskFilter, setRiskFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(false);
 
+  const riskLabel = (level: string) => {
+    switch (level) {
+      case 'low':
+        return t('risk.level.low');
+      case 'medium':
+        return t('risk.level.medium');
+      case 'high':
+        return t('risk.level.high');
+      default:
+        return level;
+    }
+  };
+
   const filteredCustomers = customers.filter((customer) => {
     const matchesSearch = customer.name.toLowerCase().includes(search.toLowerCase()) ||
       customer.email.toLowerCase().includes(search.toLowerCase());
@@ -85,17 +103,19 @@ export default function CustomersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Customers</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('customers.title')}</h1>
           <p className="text-muted-foreground mt-2">
-            Manage and analyze your customer portfolio
+            {t('customers.desc')}
           </p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/customers/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Customer
-          </Link>
-        </Button>
+        {!isViewer && (
+          <Button asChild>
+            <Link href="/dashboard/customers/new">
+              <Plus className="mr-2 h-4 w-4" />
+              {t('customers.add')}
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -105,7 +125,7 @@ export default function CustomersPage() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name or email..."
+                placeholder={t('customers.search_ph')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
@@ -116,10 +136,10 @@ export default function CustomersPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Risk Levels</SelectItem>
-                <SelectItem value="low">Low Risk</SelectItem>
-                <SelectItem value="medium">Medium Risk</SelectItem>
-                <SelectItem value="high">High Risk</SelectItem>
+                <SelectItem value="all">{t('customers.risk_filter_all')}</SelectItem>
+                <SelectItem value="low">{t('risk.level.low')}</SelectItem>
+                <SelectItem value="medium">{t('risk.level.medium')}</SelectItem>
+                <SelectItem value="high">{t('risk.level.high')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -129,9 +149,9 @@ export default function CustomersPage() {
       {/* Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Customer List</CardTitle>
+          <CardTitle>{t('customers.list_title')}</CardTitle>
           <CardDescription>
-            Showing {filteredCustomers.length} customers
+            {t('common.showing')} {filteredCustomers.length} {t('customers.items')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -139,12 +159,12 @@ export default function CustomersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Risk Level</TableHead>
-                  <TableHead>Risk Score</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('common.name')}</TableHead>
+                  <TableHead>{t('common.email')}</TableHead>
+                  <TableHead>{t('customers.risk_level')}</TableHead>
+                  <TableHead>{t('customers.risk_score')}</TableHead>
+                  <TableHead>{t('common.status')}</TableHead>
+                  <TableHead className="text-right">{t('common.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -154,19 +174,19 @@ export default function CustomersPage() {
                     <TableCell>{customer.email}</TableCell>
                     <TableCell>
                       <Badge variant={getRiskBadge(customer.riskLevel)}>
-                        {customer.riskLevel.charAt(0).toUpperCase() + customer.riskLevel.slice(1)}
+                        {riskLabel(customer.riskLevel)}
                       </Badge>
                     </TableCell>
                     <TableCell>{customer.score}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{customer.status}</Badge>
+                      <Badge variant="outline">{t(`status.${customer.status}`)}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <Link
                         href={`/dashboard/customers/${customer.id}`}
                         className="text-accent hover:underline text-sm font-medium"
                       >
-                        View
+                        {t('common.view')}
                       </Link>
                     </TableCell>
                   </TableRow>

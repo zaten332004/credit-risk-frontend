@@ -8,8 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { authHeaders, authJsonHeaders } from '@/lib/auth/token';
+import { useI18n } from '@/components/i18n-provider';
 
 export default function PowerBIConfigPage() {
+  const { t } = useI18n();
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [config, setConfig] = useState({
@@ -24,10 +27,7 @@ export default function PowerBIConfigPage() {
     try {
       const response = await fetch('/api/v1/powerbi/configure', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
+        headers: authJsonHeaders(),
         body: JSON.stringify(config),
       });
 
@@ -46,9 +46,7 @@ export default function PowerBIConfigPage() {
     try {
       const response = await fetch('/api/v1/powerbi/test-connection', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
+        headers: authHeaders(),
       });
 
       if (response.ok) {
@@ -64,9 +62,9 @@ export default function PowerBIConfigPage() {
   return (
     <div className="flex flex-col gap-8 p-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Power BI Integration</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('powerbi.title')}</h1>
         <p className="text-muted-foreground mt-2">
-          Configure and manage Power BI workspace connection
+          {t('powerbi.desc')}
         </p>
       </div>
 
@@ -74,7 +72,7 @@ export default function PowerBIConfigPage() {
         <Alert>
           <CheckCircle className="h-4 w-4 text-green-500" />
           <AlertDescription className="text-green-700">
-            Successfully connected to Power BI workspace
+            {t('powerbi.connected')}
           </AlertDescription>
         </Alert>
       )}
@@ -83,17 +81,17 @@ export default function PowerBIConfigPage() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Configuration</CardTitle>
+              <CardTitle>{t('powerbi.config_title')}</CardTitle>
               <CardDescription>
-                Enter your Power BI credentials to establish connection
+                {t('powerbi.config_desc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="tenantId">Tenant ID</Label>
+                <Label htmlFor="tenantId">{t('powerbi.tenant_id')}</Label>
                 <Input
                   id="tenantId"
-                  placeholder="Your Azure Tenant ID"
+                  placeholder={t('powerbi.tenant_id_ph')}
                   value={config.tenantId}
                   onChange={(e) => setConfig({ ...config, tenantId: e.target.value })}
                   disabled={isConnected}
@@ -101,10 +99,10 @@ export default function PowerBIConfigPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="clientId">Client ID</Label>
+                <Label htmlFor="clientId">{t('powerbi.client_id')}</Label>
                 <Input
                   id="clientId"
-                  placeholder="Application (client) ID"
+                  placeholder={t('powerbi.client_id_ph')}
                   value={config.clientId}
                   onChange={(e) => setConfig({ ...config, clientId: e.target.value })}
                   disabled={isConnected}
@@ -112,11 +110,11 @@ export default function PowerBIConfigPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="clientSecret">Client Secret</Label>
+                <Label htmlFor="clientSecret">{t('powerbi.client_secret')}</Label>
                 <Input
                   id="clientSecret"
                   type="password"
-                  placeholder="Client secret value"
+                  placeholder={t('powerbi.client_secret_ph')}
                   value={config.clientSecret}
                   onChange={(e) => setConfig({ ...config, clientSecret: e.target.value })}
                   disabled={isConnected}
@@ -124,10 +122,10 @@ export default function PowerBIConfigPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="workspaceId">Workspace ID</Label>
+                <Label htmlFor="workspaceId">{t('powerbi.workspace_id')}</Label>
                 <Input
                   id="workspaceId"
-                  placeholder="Power BI Workspace ID"
+                  placeholder={t('powerbi.workspace_id_ph')}
                   value={config.workspaceId}
                   onChange={(e) => setConfig({ ...config, workspaceId: e.target.value })}
                   disabled={isConnected}
@@ -141,26 +139,26 @@ export default function PowerBIConfigPage() {
                       {isLoading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Connecting...
+                          {t('common.connecting')}
                         </>
                       ) : (
-                        'Connect Power BI'
+                        t('powerbi.connect')
                       )}
                     </Button>
                   </>
                 ) : (
                   <>
                     <Button variant="outline" onClick={() => setIsConnected(false)} className="flex-1">
-                      Disconnect
+                      {t('common.disconnect')}
                     </Button>
                     <Button onClick={handleTestConnection} disabled={isLoading} className="flex-1">
                       {isLoading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Testing...
+                          {t('common.testing')}
                         </>
                       ) : (
-                        'Test Connection'
+                        t('powerbi.test_connection')
                       )}
                     </Button>
                   </>
@@ -173,25 +171,25 @@ export default function PowerBIConfigPage() {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Connection Status</CardTitle>
+              <CardTitle className="text-base">{t('powerbi.status_title')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm text-muted-foreground">Status</p>
+                <p className="text-sm text-muted-foreground">{t('common.status')}</p>
                 <Badge className="mt-2" variant={isConnected ? 'secondary' : 'outline'}>
-                  {isConnected ? 'Connected' : 'Not Connected'}
+                  {isConnected ? t('common.connected') : t('common.not_connected')}
                 </Badge>
               </div>
 
               {isConnected && (
                 <>
                   <div>
-                    <p className="text-sm text-muted-foreground">Workspace</p>
-                    <p className="font-medium mt-2">{config.workspaceId || 'N/A'}</p>
+                    <p className="text-sm text-muted-foreground">{t('powerbi.workspace')}</p>
+                    <p className="font-medium mt-2">{config.workspaceId || t('common.na')}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Last Synced</p>
-                    <p className="font-medium mt-2">Today, 10:30 AM</p>
+                    <p className="text-sm text-muted-foreground">{t('powerbi.last_synced')}</p>
+                    <p className="font-medium mt-2">{t('powerbi.last_synced_value')}</p>
                   </div>
                 </>
               )}
@@ -200,17 +198,17 @@ export default function PowerBIConfigPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Quick Links</CardTitle>
+              <CardTitle className="text-base">{t('common.quick_links')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <Button variant="outline" className="w-full justify-start" disabled={!isConnected}>
-                View Workspaces
+                {t('powerbi.view_workspaces')}
               </Button>
               <Button variant="outline" className="w-full justify-start" disabled={!isConnected}>
-                View Datasets
+                {t('powerbi.view_datasets')}
               </Button>
               <Button variant="outline" className="w-full justify-start" disabled={!isConnected}>
-                View Reports
+                {t('powerbi.view_reports')}
               </Button>
             </CardContent>
           </Card>

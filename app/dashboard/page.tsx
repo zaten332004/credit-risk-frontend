@@ -3,6 +3,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Users, AlertCircle, PieChart } from 'lucide-react';
+import { getUserRole, type UserRole } from '@/lib/auth/token';
+import { useI18n } from '@/components/i18n-provider';
 
 const chartData = [
   { month: 'Jan', score: 65, trend: 4000 },
@@ -28,43 +30,65 @@ const KPICard = ({ title, value, icon: Icon, change }: any) => (
   </Card>
 );
 
+function roleLabel(role: UserRole | null, t: (key: string) => string) {
+  switch (role) {
+    case 'admin':
+      return t('role.admin');
+    case 'manager':
+      return t('role.manager');
+    case 'analyst':
+      return t('role.analyst');
+    case 'viewer':
+      return t('role.viewer');
+    default:
+      return '—';
+  }
+}
+
 export default function DashboardPage() {
+  const role = getUserRole();
+  const { t } = useI18n();
   return (
     <div className="flex flex-col gap-8 p-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('dashboard.title')}</h1>
         <p className="text-muted-foreground mt-2">
-          Welcome to CRAI DB - Your intelligent credit risk analytics platform
+          {t('dashboard.welcome')} - {roleLabel(role, t)}
         </p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          title="Average Risk Score"
-          value="72.5"
-          icon={TrendingUp}
-          change={2.5}
-        />
-        <KPICard
-          title="Total Customers"
-          value="1,234"
-          icon={Users}
-          change={12.5}
-        />
-        <KPICard
-          title="High Risk Cases"
-          value="45"
-          icon={AlertCircle}
-          change={-5.2}
-        />
-        <KPICard
-          title="Portfolio Diversity"
-          value="8.2/10"
-          icon={PieChart}
-          change={1.8}
-        />
+        {role === 'admin' ? (
+          <>
+            <KPICard title="System Health" value="OK" icon={TrendingUp} change={0.0} />
+            <KPICard title="Pending Approvals" value="3" icon={AlertCircle} change={-1.0} />
+            <KPICard title="Active Users" value="128" icon={Users} change={4.2} />
+            <KPICard title="Risk Alerts" value="12" icon={PieChart} change={2.1} />
+          </>
+        ) : role === 'manager' ? (
+          <>
+            <KPICard title="Portfolio KPI" value="72.5" icon={TrendingUp} change={2.5} />
+            <KPICard title="Total Customers" value="1,234" icon={Users} change={12.5} />
+            <KPICard title="High Risk Cases" value="45" icon={AlertCircle} change={-5.2} />
+            <KPICard title="Diversification" value="8.2/10" icon={PieChart} change={1.8} />
+          </>
+        ) : role === 'viewer' ? (
+          <>
+            <KPICard title="Portfolio KPI" value="72.5" icon={TrendingUp} change={2.5} />
+            <KPICard title="Total Customers" value="1,234" icon={Users} change={12.5} />
+            <KPICard title="Risk Alerts" value="12" icon={AlertCircle} change={2.1} />
+            <KPICard title="Reports" value="8" icon={PieChart} change={1.2} />
+          </>
+        ) : (
+          <>
+            <KPICard title="Average Risk Score" value="72.5" icon={TrendingUp} change={2.5} />
+            <KPICard title="Total Customers" value="1,234" icon={Users} change={12.5} />
+            <KPICard title="High Risk Cases" value="45" icon={AlertCircle} change={-5.2} />
+            <KPICard title="Portfolio Diversity" value="8.2/10" icon={PieChart} change={1.8} />
+          </>
+        )}
       </div>
 
       {/* Charts */}
@@ -87,7 +111,7 @@ export default function DashboardPage() {
                 <Line
                   type="monotone"
                   dataKey="score"
-                  stroke="#06b6d4"
+                  stroke="var(--chart-2)"
                   strokeWidth={2}
                   name="Risk Score"
                 />
@@ -113,7 +137,7 @@ export default function DashboardPage() {
                 <Legend />
                 <Bar
                   dataKey="trend"
-                  fill="#06b6d4"
+                  fill="var(--chart-2)"
                   name="Portfolio Value"
                 />
               </BarChart>
@@ -123,32 +147,34 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>
-            Latest actions and events in your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[
-              { action: 'Customer Added', details: 'John Smith - Risk Score: 75', time: '2 hours ago' },
-              { action: 'Risk Score Updated', details: 'Portfolio average increased to 72.5', time: '4 hours ago' },
-              { action: 'Alert Generated', details: 'High risk customer detected', time: '1 day ago' },
-              { action: 'Report Generated', details: 'Monthly portfolio analysis complete', time: '2 days ago' },
-            ].map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between pb-4 border-b last:border-0 last:pb-0">
-                <div>
-                  <p className="font-medium text-foreground">{item.action}</p>
-                  <p className="text-sm text-muted-foreground">{item.details}</p>
+      {role !== 'viewer' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+            <CardDescription>
+              Latest actions and events in your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { action: 'Customer Added', details: 'John Smith - Risk Score: 75', time: '2 hours ago' },
+                { action: 'Risk Score Updated', details: 'Portfolio average increased to 72.5', time: '4 hours ago' },
+                { action: 'Alert Generated', details: 'High risk customer detected', time: '1 day ago' },
+                { action: 'Report Generated', details: 'Monthly portfolio analysis complete', time: '2 days ago' },
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between pb-4 border-b last:border-0 last:pb-0">
+                  <div>
+                    <p className="font-medium text-foreground">{item.action}</p>
+                    <p className="text-sm text-muted-foreground">{item.details}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{item.time}</p>
                 </div>
-                <p className="text-xs text-muted-foreground">{item.time}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

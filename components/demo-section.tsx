@@ -3,26 +3,28 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BarChart3, MessageSquare, TrendingUp, ChevronRight } from "lucide-react";
+import { useI18n } from "@/components/i18n-provider";
 
 const demoTabs = [
-  { id: "dashboard", label: "Dashboard", icon: BarChart3 },
-  { id: "chatbot", label: "Chatbot", icon: MessageSquare },
-  { id: "shap", label: "SHAP Analysis", icon: TrendingUp },
+  { id: "dashboard", labelKey: "home.demo.tab.dashboard", icon: BarChart3 },
+  { id: "chatbot", labelKey: "home.demo.tab.chatbot", icon: MessageSquare },
+  { id: "shap", labelKey: "home.demo.tab.shap", icon: TrendingUp },
 ];
 
 export function DemoSection() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const { t } = useI18n();
 
   return (
     <section id="demo" className="py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <span className="text-sm text-accent font-medium uppercase tracking-wider">Preview</span>
+          <span className="text-sm text-accent font-medium uppercase tracking-wider">{t("home.demo.kicker")}</span>
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mt-2 mb-4 text-balance">
-            Demo & Screenshots
+            {t("home.demo.title")}
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto text-pretty">
-            Explore the key interfaces and capabilities of the CRAI DB platform.
+            {t("home.demo.desc")}
           </p>
         </div>
 
@@ -36,7 +38,7 @@ export function DemoSection() {
               className="gap-2"
             >
               <tab.icon className="w-4 h-4" />
-              {tab.label}
+              {t(tab.labelKey)}
             </Button>
           ))}
         </div>
@@ -51,9 +53,9 @@ export function DemoSection() {
               <div className="w-3 h-3 rounded-full bg-chart-3/50" />
             </div>
             <span className="text-xs text-muted-foreground ml-2">
-              {activeTab === "dashboard" && "Power BI Dashboard - Loan Portfolio Overview"}
-              {activeTab === "chatbot" && "CRAI Assistant - Conversational Analytics"}
-              {activeTab === "shap" && "SHAP Explainability - Risk Factor Analysis"}
+              {activeTab === "dashboard" && t("home.demo.window.dashboard")}
+              {activeTab === "chatbot" && t("home.demo.window.chatbot")}
+              {activeTab === "shap" && t("home.demo.window.shap")}
             </span>
           </div>
 
@@ -70,33 +72,34 @@ export function DemoSection() {
 }
 
 function DashboardDemo() {
+  const { t } = useI18n();
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {/* KPI Cards */}
       <div className="p-4 rounded-lg bg-secondary border border-border">
-        <p className="text-xs text-muted-foreground mb-1">Total Loans</p>
+        <p className="text-xs text-muted-foreground mb-1">{t("home.demo.kpi.total_loans")}</p>
         <p className="text-2xl font-bold text-foreground">12,847</p>
-        <p className="text-xs text-accent mt-1">+5.2% this month</p>
+        <p className="text-xs text-accent mt-1">{t("home.demo.kpi.total_loans_delta")}</p>
       </div>
       <div className="p-4 rounded-lg bg-secondary border border-border">
-        <p className="text-xs text-muted-foreground mb-1">Portfolio Value</p>
+        <p className="text-xs text-muted-foreground mb-1">{t("home.demo.kpi.portfolio_value")}</p>
         <p className="text-2xl font-bold text-foreground">$847M</p>
-        <p className="text-xs text-chart-3 mt-1">+12.8% YoY</p>
+        <p className="text-xs text-chart-3 mt-1">{t("home.demo.kpi.portfolio_value_delta")}</p>
       </div>
       <div className="p-4 rounded-lg bg-secondary border border-border">
-        <p className="text-xs text-muted-foreground mb-1">Avg. Risk Score</p>
+        <p className="text-xs text-muted-foreground mb-1">{t("home.demo.kpi.avg_risk_score")}</p>
         <p className="text-2xl font-bold text-foreground">0.23</p>
-        <p className="text-xs text-accent mt-1">Low Risk</p>
+        <p className="text-xs text-accent mt-1">{t("risk.level.low")}</p>
       </div>
       <div className="p-4 rounded-lg bg-secondary border border-border">
-        <p className="text-xs text-muted-foreground mb-1">Delinquency Rate</p>
+        <p className="text-xs text-muted-foreground mb-1">{t("home.demo.kpi.delinquency_rate")}</p>
         <p className="text-2xl font-bold text-foreground">2.4%</p>
-        <p className="text-xs text-destructive mt-1">-0.3% vs last quarter</p>
+        <p className="text-xs text-destructive mt-1">{t("home.demo.kpi.delinquency_rate_delta")}</p>
       </div>
 
       {/* Chart placeholder */}
       <div className="col-span-2 lg:col-span-3 p-4 rounded-lg bg-secondary border border-border">
-        <p className="text-sm font-medium text-foreground mb-4">Risk Distribution by Segment</p>
+        <p className="text-sm font-medium text-foreground mb-4">{t("home.demo.chart.risk_dist_segment")}</p>
         <div className="flex items-end justify-between h-40 gap-2">
           {[65, 45, 80, 55, 70, 40, 85, 60, 50, 75, 45, 90].map((height, i) => (
             <div
@@ -145,11 +148,12 @@ function DashboardDemo() {
 }
 
 function ChatbotDemo() {
+  const { t } = useI18n();
   const messages = [
-    { role: "user", content: "What is the current delinquency rate for the SME portfolio?" },
-    { role: "assistant", content: "The current delinquency rate for the SME portfolio is 3.2%, which is 0.4% lower than last quarter. The improvement is primarily driven by better early-warning interventions in the manufacturing sector." },
-    { role: "user", content: "Which customers have the highest probability of default?" },
-    { role: "assistant", content: "Here are the top 5 customers with the highest PD scores:\n\n1. Acme Corp (ID: 12847) - PD: 0.78\n2. Beta Industries (ID: 9234) - PD: 0.71\n3. Gamma Solutions (ID: 5621) - PD: 0.68\n\nWould you like me to show the SHAP analysis for any of these customers?" },
+    { role: "user", content: t("home.demo.chat.q1") },
+    { role: "assistant", content: t("home.demo.chat.a1") },
+    { role: "user", content: t("home.demo.chat.q2") },
+    { role: "assistant", content: t("home.demo.chat.a2") },
   ];
 
   return (
@@ -175,7 +179,7 @@ function ChatbotDemo() {
       <div className="mt-6 flex items-center gap-2 p-3 rounded-lg bg-secondary border border-border">
         <input
           type="text"
-          placeholder="Ask a question about credit risk..."
+          placeholder={t("home.demo.chat.placeholder")}
           className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
         />
         <Button size="sm">
@@ -187,13 +191,14 @@ function ChatbotDemo() {
 }
 
 function ShapDemo() {
+  const { t } = useI18n();
   const shapValues = [
-    { feature: "Debt-to-Income Ratio", value: 0.34, impact: "positive" },
-    { feature: "Payment History", value: 0.28, impact: "negative" },
-    { feature: "Credit Utilization", value: 0.19, impact: "positive" },
-    { feature: "Employment Length", value: -0.15, impact: "negative" },
-    { feature: "Loan Amount", value: 0.12, impact: "positive" },
-    { feature: "Account Age", value: -0.08, impact: "negative" },
+    { feature: t("home.demo.shap.f1"), value: 0.34, impact: "positive" },
+    { feature: t("home.demo.shap.f2"), value: 0.28, impact: "negative" },
+    { feature: t("home.demo.shap.f3"), value: 0.19, impact: "positive" },
+    { feature: t("home.demo.shap.f4"), value: -0.15, impact: "negative" },
+    { feature: t("home.demo.shap.f5"), value: 0.12, impact: "positive" },
+    { feature: t("home.demo.shap.f6"), value: -0.08, impact: "negative" },
   ];
 
   return (
@@ -201,11 +206,11 @@ function ShapDemo() {
       <div className="p-4 rounded-lg bg-secondary border border-border mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-sm text-muted-foreground">Customer ID: 12847</p>
+            <p className="text-sm text-muted-foreground">{t("home.demo.shap.customer_id")}: 12847</p>
             <p className="text-lg font-semibold text-foreground">Acme Corporation</p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-muted-foreground">Predicted PD</p>
+            <p className="text-sm text-muted-foreground">{t("home.demo.shap.predicted_pd")}</p>
             <p className="text-2xl font-bold text-destructive">0.78</p>
           </div>
         </div>
@@ -214,7 +219,7 @@ function ShapDemo() {
         </div>
       </div>
 
-      <h4 className="text-sm font-medium text-foreground mb-4">Feature Importance (SHAP Values)</h4>
+      <h4 className="text-sm font-medium text-foreground mb-4">{t("home.demo.shap.title")}</h4>
       <div className="space-y-3">
         {shapValues.map((item) => (
           <div key={item.feature} className="flex items-center gap-4">
@@ -234,7 +239,7 @@ function ShapDemo() {
         ))}
       </div>
       <p className="text-xs text-muted-foreground mt-4">
-        Red bars indicate features increasing risk, green bars indicate features decreasing risk.
+        {t("home.demo.shap.note")}
       </p>
     </div>
   );

@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useI18n } from '@/components/i18n-provider';
 
 export default function ProfilePage() {
+  const { t } = useI18n();
   const [profile, setProfile] = useState({
     name: 'Your Name',
     email: 'your@example.com',
@@ -19,30 +21,30 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col gap-8 p-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Profile Settings</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('profile.title')}</h1>
         <p className="text-muted-foreground mt-2">
-          Manage your account settings and preferences
+          {t('profile.desc')}
         </p>
       </div>
 
       <Tabs defaultValue="general" className="w-full">
         <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="general">{t('profile.tab.general')}</TabsTrigger>
+          <TabsTrigger value="security">{t('profile.tab.security')}</TabsTrigger>
+          <TabsTrigger value="notifications">{t('profile.tab.notifications')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
+              <CardTitle>{t('profile.general.title')}</CardTitle>
               <CardDescription>
-                Update your personal details
+                {t('profile.general.desc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">{t('common.full_name')}</Label>
                 <Input
                   id="name"
                   value={profile.name}
@@ -51,7 +53,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('common.email')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -61,7 +63,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
+                <Label htmlFor="phone">{t('common.phone')}</Label>
                 <Input
                   id="phone"
                   value={profile.phone}
@@ -70,7 +72,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="company">Company</Label>
+                <Label htmlFor="company">{t('common.company')}</Label>
                 <Input
                   id="company"
                   value={profile.company}
@@ -79,7 +81,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
+                <Label htmlFor="role">{t('common.role')}</Label>
                 <Input
                   id="role"
                   value={profile.role}
@@ -87,7 +89,7 @@ export default function ProfilePage() {
                 />
               </div>
 
-              <Button>Save Changes</Button>
+              <Button>{t('common.save_changes')}</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -95,28 +97,28 @@ export default function ProfilePage() {
         <TabsContent value="security" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Change Password</CardTitle>
+              <CardTitle>{t('profile.security.title')}</CardTitle>
               <CardDescription>
-                Update your password regularly for security
+                {t('profile.security.desc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="current">Current Password</Label>
+                <Label htmlFor="current">{t('profile.security.current')}</Label>
                 <Input id="current" type="password" />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="new">New Password</Label>
+                <Label htmlFor="new">{t('profile.security.new')}</Label>
                 <Input id="new" type="password" />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirm">Confirm Password</Label>
+                <Label htmlFor="confirm">{t('profile.security.confirm')}</Label>
                 <Input id="confirm" type="password" />
               </div>
 
-              <Button>Change Password</Button>
+              <Button>{t('profile.security.change')}</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -124,14 +126,14 @@ export default function ProfilePage() {
         <TabsContent value="notifications" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
+              <CardTitle>{t('profile.notifications.title')}</CardTitle>
               <CardDescription>
-                Control how and when you receive notifications
+                {t('profile.notifications.desc')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Notification preferences will be configurable here
+                {t('profile.notifications.placeholder')}
               </p>
             </CardContent>
           </Card>

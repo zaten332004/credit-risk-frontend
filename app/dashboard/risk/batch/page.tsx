@@ -9,8 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Upload, CheckCircle } from 'lucide-react';
+import { authHeaders } from '@/lib/auth/token';
+import { useI18n } from '@/components/i18n-provider';
 
 export default function BatchRiskPage() {
+  const { t } = useI18n();
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -25,7 +28,7 @@ export default function BatchRiskPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
-      setError('Please select a file');
+      setError(t('risk.batch.select_file'));
       return;
     }
 
@@ -38,22 +41,20 @@ export default function BatchRiskPage() {
 
       const response = await fetch('/api/v1/risk/batch', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
+        headers: authHeaders(),
         body: formData,
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Batch processing failed');
+        throw new Error(data.message || t('risk.batch.failed'));
       }
 
       const data = await response.json();
       setResult(data);
       setFile(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : t('common.error'));
     } finally {
       setIsLoading(false);
     }
@@ -63,9 +64,9 @@ export default function BatchRiskPage() {
     <div className="flex flex-col gap-8 p-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Batch Risk Scoring</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('risk.batch.title')}</h1>
         <p className="text-muted-foreground mt-2">
-          Calculate risk scores for multiple customers at once
+          {t('risk.batch.desc')}
         </p>
       </div>
 
@@ -73,15 +74,15 @@ export default function BatchRiskPage() {
         {/* Upload Form */}
         <Card>
           <CardHeader>
-            <CardTitle>Upload Customer Data</CardTitle>
+            <CardTitle>{t('risk.batch.card_title')}</CardTitle>
             <CardDescription>
-              Upload a CSV file with customer information
+              {t('risk.batch.card_desc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="file">CSV File</Label>
+                <Label htmlFor="file">{t('risk.batch.csv_file')}</Label>
                 <div className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-accent transition-colors">
                   <input
                     id="file"
@@ -93,14 +94,14 @@ export default function BatchRiskPage() {
                   />
                   <label htmlFor="file" className="cursor-pointer">
                     <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm font-medium">{file?.name || 'Click to upload or drag and drop'}</p>
-                    <p className="text-xs text-muted-foreground mt-1">CSV files up to 10MB</p>
+                    <p className="text-sm font-medium">{file?.name || t('upload.drop_prompt')}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('risk.batch.csv_limit')}</p>
                   </label>
                 </div>
               </div>
 
               <div className="bg-secondary p-4 rounded-lg">
-                <p className="text-sm font-medium mb-2">Expected CSV Format:</p>
+                <p className="text-sm font-medium mb-2">{t('risk.batch.expected_format')}</p>
                 <code className="text-xs text-muted-foreground">
                   customer_id,name,income,loan_amount,credit_history
                 </code>
@@ -110,12 +111,12 @@ export default function BatchRiskPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
+                    {t('common.processing')}
                   </>
                 ) : (
                   <>
                     <Upload className="mr-2 h-4 w-4" />
-                    Process Batch
+                    {t('risk.batch.process')}
                   </>
                 )}
               </Button>
@@ -136,45 +137,45 @@ export default function BatchRiskPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-500" />
-                  Processing Complete
+                  {t('risk.batch.complete')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Processed</p>
+                    <p className="text-sm text-muted-foreground">{t('common.processed')}</p>
                     <p className="text-2xl font-bold mt-2">{result.processed_count || 0}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Successful</p>
+                    <p className="text-sm text-muted-foreground">{t('common.successful')}</p>
                     <p className="text-2xl font-bold text-green-500 mt-2">{result.success_count || 0}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Failed</p>
+                    <p className="text-sm text-muted-foreground">{t('common.failed')}</p>
                     <p className="text-2xl font-bold text-red-500 mt-2">{result.error_count || 0}</p>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-sm font-medium mb-3">Score Summary</p>
+                  <p className="text-sm font-medium mb-3">{t('risk.batch.summary')}</p>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Average Score</span>
+                      <span className="text-sm text-muted-foreground">{t('customers.avg_score')}</span>
                       <span className="font-medium">{result.average_score?.toFixed(2) || 'N/A'}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Highest Score</span>
+                      <span className="text-sm text-muted-foreground">{t('risk.batch.max_score')}</span>
                       <span className="font-medium">{result.max_score || 'N/A'}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Lowest Score</span>
+                      <span className="text-sm text-muted-foreground">{t('risk.batch.min_score')}</span>
                       <span className="font-medium">{result.min_score || 'N/A'}</span>
                     </div>
                   </div>
                 </div>
 
                 <Button className="w-full" variant="outline">
-                  Download Results
+                  {t('risk.batch.download')}
                 </Button>
               </CardContent>
             </Card>
@@ -184,7 +185,7 @@ export default function BatchRiskPage() {
             <Card>
               <CardContent className="pt-12 pb-12 text-center">
                 <p className="text-muted-foreground">
-                  Upload a CSV file to process batch risk scores
+                  {t('risk.batch.empty')}
                 </p>
               </CardContent>
             </Card>

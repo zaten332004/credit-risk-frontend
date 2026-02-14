@@ -8,10 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Image from 'next/image';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { LanguageToggle } from '@/components/language-toggle';
+import { useI18n } from '@/components/i18n-provider';
 
 function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState('');
@@ -43,11 +47,17 @@ function VerifyEmailContent() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+      <div className="absolute right-4 top-4">
+        <div className="flex items-center gap-2">
+          <LanguageToggle variant="outline" />
+          <ThemeToggle variant="outline" />
+        </div>
+      </div>
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <Image
-            src="/logo.png"
+            src="/logo.svg"
             alt="CRAI DB"
             width={120}
             height={120}
@@ -62,9 +72,9 @@ function VerifyEmailContent() {
                 <div className="flex justify-center mb-4">
                   <CheckCircle className="h-12 w-12 text-green-500" />
                 </div>
-                <CardTitle className="text-2xl">Email Verified</CardTitle>
+                <CardTitle className="text-2xl">{t("verify.verified_title")}</CardTitle>
                 <CardDescription>
-                  Your email has been successfully verified
+                  {t("verify.verified_desc")}
                 </CardDescription>
               </>
             ) : isLoading ? (
@@ -72,16 +82,16 @@ function VerifyEmailContent() {
                 <div className="flex justify-center mb-4">
                   <Loader2 className="h-12 w-12 text-accent animate-spin" />
                 </div>
-                <CardTitle className="text-2xl">Verifying Email</CardTitle>
+                <CardTitle className="text-2xl">{t("verify.verifying_title")}</CardTitle>
                 <CardDescription>
-                  Please wait while we verify your email address
+                  {t("verify.verifying_desc")}
                 </CardDescription>
               </>
             ) : (
               <>
-                <CardTitle className="text-2xl">Verify Your Email</CardTitle>
+                <CardTitle className="text-2xl">{t("verify.check_title")}</CardTitle>
                 <CardDescription>
-                  Check your email for a verification link
+                  {t("verify.check_desc")}
                 </CardDescription>
               </>
             )}
@@ -98,11 +108,11 @@ function VerifyEmailContent() {
             {isVerified && (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground text-center">
-                  Your account is now active. You can proceed to sign in.
+                  {t("verify.active_notice")}
                 </p>
                 <Link href="/auth/login" className="block">
                   <Button type="button" className="w-full">
-                    Go to Sign In
+                    {t("verify.go_sign_in")}
                   </Button>
                 </Link>
               </div>
@@ -111,10 +121,10 @@ function VerifyEmailContent() {
             {!isVerified && !isLoading && !error && (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  We've sent a verification link to your email address. Click the link in the email to verify your account.
+                  {t("verify.sent_1")}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  If you don't see the email, check your spam folder.
+                  {t("verify.sent_2")}
                 </p>
               </div>
             )}
@@ -122,7 +132,7 @@ function VerifyEmailContent() {
             {!isVerified && (
               <div className="mt-6 text-center text-sm text-muted-foreground">
                 <Link href="/auth/login" className="text-accent hover:underline font-medium">
-                  Back to sign in
+                  {t("verify.back_sign_in")}
                 </Link>
               </div>
             )}
@@ -134,13 +144,14 @@ function VerifyEmailContent() {
 }
 
 export default function VerifyEmailPage() {
+  const { t } = useI18n();
   return (
     <Suspense
       fallback={
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-8 w-8 text-accent animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">{t("verify.loading")}</p>
           </div>
         </div>
       }
