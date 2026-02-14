@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Navigation } from "@/components/navigation";
 import { HeroSection } from "@/components/hero-section";
 import { ProblemSolutionSection } from "@/components/problem-solution-section";
@@ -10,6 +14,16 @@ import { AboutSection } from "@/components/about-section";
 import { Footer } from "@/components/footer";
 
 export default function Home() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      router.push('/dashboard');
+    }
+  }, [router]);
+
   return (
     <main className="min-h-screen">
       <Navigation />
