@@ -173,7 +173,7 @@ export function AppSidebar() {
 
   const handleLogout = () => {
     clearAccessToken();
-    router.push('/auth/login');
+    router.push('/auth?mode=login');
   };
 
   const toggleItem = (title: string) => {

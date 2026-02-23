@@ -67,6 +67,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
     "auth.have_account": "Đã có tài khoản?",
     "auth.passwords_no_match": "Mật khẩu xác nhận không khớp",
     "auth.register_failed": "Đăng ký thất bại",
+    "auth.overlay.hello": "Xin chào!",
+    "auth.overlay.welcome_back": "Chào mừng quay lại!",
+    "auth.overlay.no_account": "Chưa có tài khoản?",
+    "auth.overlay.have_account": "Đã có tài khoản?",
 
     "dashboard.title": "Bảng điều khiển",
     "dashboard.welcome": "Chào mừng đến CRAI DB",
@@ -791,6 +795,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
     "auth.have_account": "Already have an account?",
     "auth.passwords_no_match": "Passwords do not match",
     "auth.register_failed": "Registration failed",
+    "auth.overlay.hello": "Hello, welcome!",
+    "auth.overlay.welcome_back": "Welcome back!",
+    "auth.overlay.no_account": "Don't have an account?",
+    "auth.overlay.have_account": "Already have an account?",
 
     "dashboard.title": "Dashboard",
     "dashboard.welcome": "Welcome to CRAI DB",

@@ -110,7 +110,7 @@ function VerifyEmailContent() {
                 <p className="text-sm text-muted-foreground text-center">
                   {t("verify.active_notice")}
                 </p>
-                <Link href="/auth/login" className="block">
+                <Link href="/auth?mode=login" className="block">
                   <Button type="button" className="w-full">
                     {t("verify.go_sign_in")}
                   </Button>
@@ -131,7 +131,7 @@ function VerifyEmailContent() {
 
             {!isVerified && (
               <div className="mt-6 text-center text-sm text-muted-foreground">
-                <Link href="/auth/login" className="text-accent hover:underline font-medium">
+                <Link href="/auth?mode=login" className="text-accent hover:underline font-medium">
                   {t("verify.back_sign_in")}
                 </Link>
               </div>

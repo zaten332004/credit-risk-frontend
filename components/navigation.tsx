@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -21,9 +21,17 @@ const navLinks = [
 
 export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useI18n();
+
+  useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const animateScrollTo = (targetY: number, durationMs: number) => {
     if (typeof window === "undefined") return;
@@ -93,7 +101,13 @@ export function Navigation() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+    <header
+      className={[
+        "fixed top-0 left-0 right-0 z-50 border-b",
+        "backdrop-blur-md transition-[background-color,box-shadow,border-color] duration-300",
+        isScrolled ? "bg-background/92 border-border shadow-lg shadow-black/10" : "bg-background/70 border-border/60",
+      ].join(" ")}
+    >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link
@@ -121,7 +135,7 @@ export function Navigation() {
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
             <LanguageToggle />
-            <Link href="/auth/login">
+            <Link href="/auth?mode=login">
               <Button size="sm">{t("nav.sign_in")}</Button>
             </Link>
           </div>
@@ -157,7 +171,7 @@ export function Navigation() {
                   <span className="text-sm text-muted-foreground">{t("nav.language")}</span>
                   <LanguageToggle variant="outline" />
                 </div>
-                <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)}>
+                <Link href="/auth?mode=login" onClick={() => setMobileMenuOpen(false)}>
                   <Button size="sm" className="w-full justify-start">
                     {t("nav.sign_in")}
                   </Button>
