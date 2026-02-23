@@ -41,7 +41,6 @@ import {
   Users,
   TrendingUp,
   PieChart,
-  MessageSquare,
   Zap,
   AlertCircle,
   Upload,
@@ -49,6 +48,8 @@ import {
   LogOut,
   ChevronDown,
   BarChart3,
+  ScrollText,
+  Download,
 } from 'lucide-react';
 
 const navigationItems = [
@@ -115,11 +116,6 @@ const navigationItems = [
     ],
   },
   {
-    titleKey: 'sidebar.chat',
-    href: '/dashboard/chat',
-    icon: MessageSquare,
-  },
-  {
     titleKey: 'sidebar.ai_chat',
     href: '/dashboard/ai-chat',
     icon: Zap,
@@ -152,6 +148,16 @@ const adminItems = [
     href: '/dashboard/admin/registrations',
     icon: AlertCircle,
   },
+  {
+    titleKey: 'sidebar.admin.audit_logs',
+    href: '/dashboard/admin/audit-logs',
+    icon: ScrollText,
+  },
+  {
+    titleKey: 'sidebar.admin.export',
+    href: '/dashboard/admin/export',
+    icon: Download,
+  },
 ];
 
 export function AppSidebar() {
@@ -180,10 +186,69 @@ export function AppSidebar() {
   const isAdmin = role === 'admin';
   const isViewer = role === 'viewer';
 
+  const visibleNavHrefs = React.useMemo(() => {
+    const hrefs: string[] = [];
+    for (const item of navigationItems) {
+      if (isViewer) {
+        if (item.href === '/dashboard/upload') continue;
+      }
+      if (item.items) {
+        const filteredSubItems = isViewer
+          ? item.items.filter((subItem) => !subItem.href.includes('/batch'))
+          : item.items;
+        for (const subItem of filteredSubItems) hrefs.push(subItem.href);
+        continue;
+      }
+      if (item.href) hrefs.push(item.href);
+    }
+
+    if (isAdmin) {
+      for (const item of adminItems) hrefs.push(item.href);
+    }
+
+    // Ensure deterministic indices and a fallback.
+    if (!hrefs.includes('/dashboard')) hrefs.unshift('/dashboard');
+    return hrefs;
+  }, [isAdmin, isViewer]);
+
+  const navIndexFor = React.useCallback(
+    (path: string) => {
+      let bestIdx = -1;
+      let bestLen = -1;
+      for (let i = 0; i < visibleNavHrefs.length; i++) {
+        const href = visibleNavHrefs[i];
+        const matches = path === href || path.startsWith(href + '/');
+        if (!matches) continue;
+        if (href.length > bestLen) {
+          bestIdx = i;
+          bestLen = href.length;
+        }
+      }
+      return bestIdx;
+    },
+    [visibleNavHrefs],
+  );
+
+  const currentNavIndex = navIndexFor(pathname);
+
+  const navDirForHref = React.useCallback(
+    (href: string) => {
+      const toIndex = navIndexFor(href);
+      if (toIndex === -1 || currentNavIndex === -1) return 'forward' as const;
+      if (toIndex === currentNavIndex) return 'forward' as const;
+      return toIndex < currentNavIndex ? ('back' as const) : ('forward' as const);
+    },
+    [currentNavIndex, navIndexFor],
+  );
+
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border p-4">
-        <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <Link
+          href="/dashboard"
+          data-nav-dir={navDirForHref('/dashboard')}
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+        >
           <Image
             src="/logo.svg"
             alt="CRAI DB"
@@ -236,7 +301,7 @@ export function AppSidebar() {
                               asChild
                               isActive={isActive(subItem.href)}
                             >
-                              <Link href={subItem.href}>
+                              <Link href={subItem.href} data-nav-dir={navDirForHref(subItem.href)}>
                                 <span>{t(subItem.titleKey)}</span>
                               </Link>
                             </SidebarMenuSubButton>
@@ -256,7 +321,7 @@ export function AppSidebar() {
                   isActive={isActive(item.href)}
                   tooltip={t(item.titleKey)}
                 >
-                  <Link href={item.href}>
+                  <Link href={item.href} data-nav-dir={navDirForHref(item.href)}>
                     <item.icon className="h-4 w-4" />
                     <span>{t(item.titleKey)}</span>
                   </Link>
@@ -282,7 +347,7 @@ export function AppSidebar() {
                     isActive={isActive(item.href)}
                     tooltip={t(item.titleKey)}
                   >
-                    <Link href={item.href}>
+                    <Link href={item.href} data-nav-dir={navDirForHref(item.href)}>
                       <item.icon className="h-4 w-4" />
                       <span>{t(item.titleKey)}</span>
                     </Link>

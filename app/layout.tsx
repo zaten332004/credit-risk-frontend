@@ -6,6 +6,7 @@ import { I18nProvider } from '@/components/i18n-provider'
 import { cookies } from 'next/headers'
 import { normalizeLocale } from '@/lib/i18n/cookies'
 import { PageTransition } from '@/components/page-transition'
+import { RouteTransitionListener } from '@/components/route-transition-listener'
 
 export const metadata: Metadata = {
   title: 'CRAI DB - Intelligent Credit Risk Analytics Platform',
@@ -43,6 +44,7 @@ export default async function RootLayout({
       <body className={`font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <I18nProvider initialLocale={initialLocale}>
+            <RouteTransitionListener />
             <PageTransition>{children}</PageTransition>
           </I18nProvider>
         </ThemeProvider>

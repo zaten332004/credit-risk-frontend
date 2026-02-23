@@ -40,6 +40,7 @@ export const API_GROUPS: ApiGroup[] = [
         auth: "admin",
       },
       { method: "POST", path: "/auth/register/approve", auth: "admin" },
+      { method: "POST", path: "/auth/register/reject", auth: "admin" },
       { method: "GET", path: "/auth/register/registration/{user_id}", auth: "admin" },
     ],
   },
@@ -93,6 +94,7 @@ export const API_GROUPS: ApiGroup[] = [
   {
     name: "AI Chat (Gemini/Mock)",
     endpoints: [
+      { method: "GET", path: "/ai-chat/models", auth: "auth" },
       { method: "POST", path: "/ai-chat/start", auth: "auth" },
       {
         method: "POST",
@@ -100,11 +102,11 @@ export const API_GROUPS: ApiGroup[] = [
         auth: "auth",
         notes: "Returns sources (e.g. powerbi:portfolio_metrics)",
       },
+      { method: "GET", path: "/ai-chat/sessions", auth: "auth" },
       { method: "GET", path: "/ai-chat/history/{session_id}?limit=", auth: "auth" },
       { method: "POST", path: "/ai-chat/close/{session_id}", auth: "auth" },
-      { method: "GET", path: "/ai-chat/sessions", auth: "auth" },
-      { method: "GET", path: "/ai-chat/models", auth: "auth" },
-      { method: "GET", path: "/ai-chat/report/{session_id}", auth: "auth" },
+      { method: "GET", path: "/ai-chat/debug", auth: "auth" },
+      { method: "GET", path: "/ai-chat/context-preview", auth: "auth" },
     ],
   },
   {
@@ -134,8 +136,11 @@ export const API_GROUPS: ApiGroup[] = [
     name: "Admin",
     endpoints: [
       { method: "GET", path: "/admin/users", auth: "admin" },
+      { method: "POST", path: "/admin/users", auth: "admin" },
       { method: "GET", path: "/admin/users/search?user_id=&name=&name_contains=", auth: "admin" },
       { method: "POST", path: "/admin/manager-registrations/decision", auth: "admin" },
+      { method: "GET", path: "/admin/audit-logs", auth: "admin" },
+      { method: "POST", path: "/admin/export", auth: "admin" },
       {
         method: "PATCH",
         path: "/admin/users/{target_user_id}/status?is_active=true|false",
@@ -155,4 +160,3 @@ export const API_GROUPS: ApiGroup[] = [
     endpoints: [{ method: "GET", path: "/chat-ui", auth: "public", notes: "Web page" }],
   },
 ];
-

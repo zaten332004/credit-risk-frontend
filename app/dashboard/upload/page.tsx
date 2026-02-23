@@ -1,15 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Upload, CheckCircle, AlertCircle, File } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Upload, CheckCircle, AlertCircle, File, Loader2, RefreshCw } from 'lucide-react';
 import { authHeaders } from '@/lib/auth/token';
 import { getUserRole } from '@/lib/auth/token';
 import { useI18n } from '@/components/i18n-provider';
+import { browserApiFetchAuth } from '@/lib/api/browser';
+import { ApiError } from '@/lib/api/shared';
 
 const uploadHistory = [
   {
@@ -47,6 +50,23 @@ export default function UploadPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadResult, setUploadResult] = useState<any>(null);
+  const [jobId, setJobId] = useState('');
+  const [jobStatus, setJobStatus] = useState<any>(null);
+  const [jobError, setJobError] = useState<string | null>(null);
+  const [isCheckingJob, setIsCheckingJob] = useState(false);
+  const [autoPoll, setAutoPoll] = useState(true);
+
+  const formatApiError = (err: unknown) => {
+    if (err instanceof ApiError) {
+      return `${err.message} — ${err.url}${err.bodyText ? `\n${err.bodyText}` : ''}`;
+    }
+    return err instanceof Error ? err.message : String(err);
+  };
+
+  const derivedJobId = useMemo(() => {
+    const fromResult = String(uploadResult?.job_id ?? uploadResult?.jobId ?? '').trim();
+    return jobId.trim() || fromResult;
+  }, [jobId, uploadResult]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -78,6 +98,7 @@ export default function UploadPage() {
 
     setIsUploading(true);
     setUploadProgress(0);
+    setJobError(null);
 
     try {
       const formData = new FormData();
@@ -95,6 +116,8 @@ export default function UploadPage() {
 
       const data = await response.json();
       setUploadResult(data);
+      const nextJobId = String(data?.job_id ?? data?.jobId ?? '').trim();
+      if (nextJobId) setJobId(nextJobId);
       setFile(null);
       setUploadProgress(100);
 
@@ -108,6 +131,32 @@ export default function UploadPage() {
       setUploadProgress(0);
     }
   };
+
+  const checkJob = async (id: string) => {
+    const clean = id.trim();
+    if (!clean) return;
+    setIsCheckingJob(true);
+    setJobError(null);
+    try {
+      const data = await browserApiFetchAuth<any>(`/jobs/${encodeURIComponent(clean)}`, { method: 'GET' });
+      setJobStatus(data);
+    } catch (err) {
+      setJobError(formatApiError(err));
+    } finally {
+      setIsCheckingJob(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!autoPoll) return;
+    if (!derivedJobId) return;
+
+    const interval = setInterval(() => {
+      void checkJob(derivedJobId);
+    }, 2500);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPoll, derivedJobId]);
 
   return (
     <div className="flex flex-col gap-8 p-8">
@@ -231,6 +280,66 @@ export default function UploadPage() {
                 <p className="text-muted-foreground">CUST-001,John Smith,john@example.com,50000,25000,60</p>
                 <p className="text-muted-foreground">CUST-002,Jane Doe,jane@example.com,75000,30000,84</p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Job Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('upload.jobs_title')}</CardTitle>
+              <CardDescription>{t('upload.jobs_desc')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {jobError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="whitespace-pre-wrap">{jobError}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                <div className="md:col-span-2">
+                  <label className="text-sm font-medium">{t('upload.job_id')}</label>
+                  <Input
+                    value={jobId}
+                    onChange={(e) => setJobId(e.target.value)}
+                    placeholder={t('upload.job_id_ph')}
+                    className="mt-2"
+                  />
+                  {uploadResult?.job_id && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {t('upload.job_id_from_upload')}: <span className="font-mono">{String(uploadResult.job_id)}</span>
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => void checkJob(derivedJobId)}
+                    disabled={!derivedJobId || isCheckingJob}
+                    className="flex-1"
+                  >
+                    {isCheckingJob ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                    {t('common.check')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setAutoPoll((v) => !v)}
+                    disabled={!derivedJobId}
+                  >
+                    {autoPoll ? t('common.auto_on') : t('common.auto_off')}
+                  </Button>
+                </div>
+              </div>
+
+              {jobStatus && (
+                <div className="rounded-md border bg-secondary p-3">
+                  <p className="text-sm font-medium">{t('upload.job_status')}</p>
+                  <pre className="mt-2 max-h-72 overflow-auto text-xs text-muted-foreground">
+                    {JSON.stringify(jobStatus, null, 2)}
+                  </pre>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
