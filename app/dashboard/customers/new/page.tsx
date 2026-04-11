@@ -8,31 +8,116 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { authJsonHeaders } from '@/lib/auth/token';
 import { getUserRole } from '@/lib/auth/token';
 import { useI18n } from '@/components/i18n-provider';
+import { formatUserFacingFetchError } from '@/lib/api/format-api-error';
+import { notifyError, notifySuccess } from '@/lib/notify';
+import {
+  isValidEmail,
+  isValidVietnamNationalId,
+  sanitizeVietnamNationalId,
+} from '@/lib/validation/account';
 
 export default function NewCustomerPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
   const role = getUserRole();
   const isViewer = role === 'viewer';
+  const isVi = locale === 'vi';
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
-    name: '',
+    full_name: '',
+    external_customer_ref: '',
     email: '',
-    phone: '',
-    company: '',
-    income: '',
+    phone_number: '',
+    date_of_birth: '',
+    gender: '',
+    national_id: '',
+    nationality: '',
+    marital_status: '',
+    occupation: '',
+    employment_status: '',
+    monthly_income: '',
+    permanent_address: '',
+    current_address: '',
+    loan_type: '',
+    loan_purpose: '',
+    requested_loan_amount: '',
+    requested_term_months: '',
+    annual_interest_rate: '',
+    collateral_id: '',
+    collateral_value: '',
     notes: '',
   });
 
+  const LOAN_TYPE_OPTIONS = [
+    { value: 'secured', labelVi: 'Có tài sản bảo đảm', labelEn: 'Secured' },
+    { value: 'unsecured', labelVi: 'Tín chấp', labelEn: 'Unsecured' },
+    { value: 'mortgage', labelVi: 'Thế chấp', labelEn: 'Mortgage' },
+    { value: 'business', labelVi: 'Kinh doanh', labelEn: 'Business' },
+  ] as const;
+
+  const normalizeLoanType = (value: string) => {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (!normalized) return '';
+    if (['secured', 'unsecured', 'mortgage', 'business'].includes(normalized)) return normalized;
+    if (normalized.includes('tài sản')) return 'secured';
+    if (normalized.includes('tín chấp')) return 'unsecured';
+    if (normalized.includes('thế chấp')) return 'mortgage';
+    if (normalized.includes('kinh doanh')) return 'business';
+    return normalized;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    if (name === 'phone_number') {
+      setFormData((prev) => ({ ...prev, [name]: value.replace(/[^\d+]/g, '').slice(0, 15) }));
+      return;
+    }
+    if (
+      name === 'monthly_income' ||
+      name === 'requested_loan_amount' ||
+      name === 'requested_term_months' ||
+      name === 'annual_interest_rate' ||
+      name === 'collateral_value'
+    ) {
+      setFormData((prev) => ({ ...prev, [name]: value.replace(/[^\d.]/g, '') }));
+      return;
+    }
+    if (name === 'national_id') {
+      setFormData((prev) => ({ ...prev, [name]: sanitizeVietnamNationalId(value) }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const checkDuplicateNationalId = async (nationalId: string) => {
+    const response = await fetch(
+      `/api/v1/customers?page=1&limit=50&search_name=${encodeURIComponent(nationalId)}`,
+      {
+        method: 'GET',
+        headers: authJsonHeaders(),
+      },
+    );
+    if (!response.ok) return false;
+    const data = (await response.json()) as Record<string, unknown>;
+    const candidates = Array.isArray(data.items)
+      ? data.items
+      : Array.isArray(data.customers)
+        ? data.customers
+        : Array.isArray(data.results)
+          ? data.results
+          : [];
+    return candidates.some((item) => {
+      if (!item || typeof item !== 'object') return false;
+      const existing = sanitizeVietnamNationalId(String((item as Record<string, unknown>).national_id ?? ''));
+      return existing === nationalId;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,27 +129,109 @@ export default function NewCustomerPage() {
       if (isViewer) {
         throw new Error(t('common.viewer_readonly'));
       }
+      const trimmedFullName = formData.full_name.trim();
+      const trimmedEmail = formData.email.trim();
+      const normalizedLoanType = normalizeLoanType(formData.loan_type);
+      const trimmedLoanPurpose = formData.loan_purpose.trim();
+      const normalizedNationalId = sanitizeVietnamNationalId(formData.national_id);
+      const monthlyIncome = Number(formData.monthly_income);
+      const requestedLoanAmount = Number(formData.requested_loan_amount);
+      const requestedTermMonths = Number(formData.requested_term_months);
+
+      if (!trimmedFullName) {
+        throw new Error(isVi ? 'Vui lòng nhập họ và tên khách hàng.' : 'Please enter customer full name.');
+      }
+      if (!trimmedEmail || !isValidEmail(trimmedEmail)) {
+        throw new Error(isVi ? 'Email không đúng định dạng.' : 'Email format is invalid.');
+      }
+      if (!isValidVietnamNationalId(normalizedNationalId)) {
+        throw new Error(
+          isVi
+            ? 'CCCD phải gồm đúng 12 chữ số. Không được nhập chữ hoặc ký tự đặc biệt.'
+            : 'National ID must contain exactly 12 digits. Letters and special characters are not allowed.',
+        );
+      }
+      if (!normalizedLoanType) {
+        throw new Error(isVi ? 'Vui lòng chọn hoặc nhập loại vay.' : 'Please select or enter loan type.');
+      }
+      if (!trimmedLoanPurpose) {
+        throw new Error(isVi ? 'Vui lòng nhập mục đích vay.' : 'Please enter loan purpose.');
+      }
+      if (!Number.isFinite(monthlyIncome) || monthlyIncome <= 0) {
+        throw new Error(isVi ? 'Thu nhập hàng tháng phải lớn hơn 0.' : 'Monthly income must be greater than 0.');
+      }
+      if (!Number.isFinite(requestedLoanAmount) || requestedLoanAmount <= 0) {
+        throw new Error(isVi ? 'Khoản vay đề nghị phải lớn hơn 0.' : 'Requested loan amount must be greater than 0.');
+      }
+      if (!Number.isInteger(requestedTermMonths) || requestedTermMonths <= 0) {
+        throw new Error(
+          isVi ? 'Kỳ hạn vay phải là số tháng hợp lệ (> 0).' : 'Loan term must be a valid month count (> 0).',
+        );
+      }
+      if (await checkDuplicateNationalId(normalizedNationalId)) {
+        throw new Error(
+          isVi
+            ? 'CCCD này đã tồn tại trong hệ thống. Mỗi khách hàng chỉ được dùng một CCCD duy nhất.'
+            : 'This national ID already exists in the system. Each customer must have a unique national ID.',
+        );
+      }
+
       const response = await fetch('/api/v1/customers', {
         method: 'POST',
         headers: authJsonHeaders(),
         body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          company: formData.company,
-          income: parseFloat(formData.income),
-          notes: formData.notes,
+          full_name: trimmedFullName,
+          email: trimmedEmail,
+          external_customer_ref: formData.external_customer_ref.trim() || undefined,
+          phone_number: formData.phone_number || undefined,
+          date_of_birth: formData.date_of_birth || undefined,
+          gender: formData.gender || undefined,
+          national_id: normalizedNationalId,
+          nationality: formData.nationality.trim() || undefined,
+          marital_status: formData.marital_status.trim() || undefined,
+          occupation: formData.occupation.trim() || undefined,
+          employment_status: formData.employment_status.trim() || undefined,
+          monthly_income: monthlyIncome,
+          permanent_address: formData.permanent_address.trim() || undefined,
+          current_address: formData.current_address.trim() || undefined,
+          loan_type: normalizedLoanType,
+          product_type: normalizedLoanType,
+          loan_purpose: trimmedLoanPurpose,
+          requested_loan_amount: requestedLoanAmount,
+          loan_amount: requestedLoanAmount,
+          requested_term_months: requestedTermMonths,
+          loan_term_months: requestedTermMonths,
+          annual_interest_rate: formData.annual_interest_rate ? parseFloat(formData.annual_interest_rate) : undefined,
+          interest_rate: formData.annual_interest_rate ? parseFloat(formData.annual_interest_rate) : undefined,
+          application_status: 'pending',
+          collateral_id: formData.collateral_id.trim() || undefined,
+          collateral_value: formData.collateral_value ? parseFloat(formData.collateral_value) : undefined,
+          notes: formData.notes.trim() || undefined,
         }),
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || t('customers.new.failed'));
+        const bodyText = await response.text();
+        throw new Error(formatUserFacingFetchError(response.status, bodyText));
       }
 
+      notifySuccess(t('customers.new.create'), {
+        details: [
+          `${t('common.full_name')}: ${formData.full_name || '-'}`,
+          `${t('common.email')}: ${formData.email || '-'}`,
+          `${t('common.phone')}: ${formData.phone_number || '-'}`,
+        ],
+      });
       router.push('/dashboard/customers');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
+      const message = err instanceof Error ? err.message : t('common.error');
+      setError(message);
+      notifyError(message, {
+        details: [
+          `${t('common.full_name')}: ${formData.full_name || '-'}`,
+          `${t('common.email')}: ${formData.email || '-'}`,
+        ],
+      });
     } finally {
       setIsLoading(false);
     }
@@ -97,12 +264,12 @@ export default function NewCustomerPage() {
         </Alert>
       )}
 
-      <div className="max-w-2xl">
+      <div className="grid max-w-6xl grid-cols-1 gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>{t('customers.new.card_title')}</CardTitle>
+            <CardTitle>Thông tin khách hàng</CardTitle>
             <CardDescription>
-              {t('customers.new.card_desc')}
+              Các trường định danh và liên hệ cần thiết để tạo khách hàng mới.
             </CardDescription>
           </CardHeader>
 
@@ -113,15 +280,15 @@ export default function NewCustomerPage() {
               </Alert>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form id="new-customer-form" onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">{t('common.full_name')} *</Label>
+                  <Label htmlFor="full_name">{t('common.full_name')} *</Label>
                   <Input
-                    id="name"
-                    name="name"
+                    id="full_name"
+                    name="full_name"
                     placeholder={t('common.full_name_ph')}
-                    value={formData.name}
+                    value={formData.full_name}
                     onChange={handleChange}
                     disabled={isLoading}
                     required
@@ -145,74 +312,188 @@ export default function NewCustomerPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="phone">{t('common.phone')}</Label>
+                  <Label htmlFor="external_customer_ref">Mã tham chiếu ngoài</Label>
                   <Input
-                    id="phone"
-                    name="phone"
-                    placeholder={t('common.phone_ph')}
-                    value={formData.phone}
+                    id="external_customer_ref"
+                    name="external_customer_ref"
+                    placeholder="VD: CUS-2026-001"
+                    value={formData.external_customer_ref}
                     onChange={handleChange}
                     disabled={isLoading}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="company">{t('common.company')}</Label>
+                  <Label htmlFor="phone_number">{t('common.phone')}</Label>
                   <Input
-                    id="company"
-                    name="company"
-                    placeholder={t('common.company_ph')}
-                    value={formData.company}
+                    id="phone_number"
+                    name="phone_number"
+                    placeholder={t('common.phone_ph')}
+                    value={formData.phone_number}
                     onChange={handleChange}
                     disabled={isLoading}
                   />
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="date_of_birth">Ngày sinh</Label>
+                  <Input id="date_of_birth" name="date_of_birth" type="date" value={formData.date_of_birth} onChange={handleChange} disabled={isLoading} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="gender">Giới tính</Label>
+                  <Input id="gender" name="gender" placeholder="Nam / Nữ / Khác" value={formData.gender} onChange={handleChange} disabled={isLoading} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="national_id">Số giấy tờ</Label>
+                  <Input
+                    id="national_id"
+                    name="national_id"
+                    inputMode="numeric"
+                    placeholder="Nhập CCCD 12 số"
+                    value={formData.national_id}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    className="placeholder:text-muted-foreground/55"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nationality">Quốc tịch</Label>
+                  <Input id="nationality" name="nationality" placeholder="Việt Nam" value={formData.nationality} onChange={handleChange} disabled={isLoading} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="marital_status">Tình trạng hôn nhân</Label>
+                  <Input id="marital_status" name="marital_status" placeholder="Độc thân / Đã kết hôn..." value={formData.marital_status} onChange={handleChange} disabled={isLoading} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="occupation">Nghề nghiệp</Label>
+                  <Input id="occupation" name="occupation" placeholder="VD: Nhân viên kinh doanh" value={formData.occupation} onChange={handleChange} disabled={isLoading} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="employment_status">Tình trạng nghề nghiệp</Label>
+                  <Input id="employment_status" name="employment_status" placeholder="Đang làm việc / Tự kinh doanh..." value={formData.employment_status} onChange={handleChange} disabled={isLoading} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="monthly_income">{t('customers.new.income')} *</Label>
+                  <Input id="monthly_income" name="monthly_income" inputMode="decimal" placeholder={t('customers.new.income_ph')} value={formData.monthly_income} onChange={handleChange} disabled={isLoading} required />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="income">{t('customers.new.income')}</Label>
-                <Input
-                  id="income"
-                  name="income"
-                  type="number"
-                  placeholder={t('customers.new.income_ph')}
-                  value={formData.income}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                />
+                <Label htmlFor="permanent_address">Địa chỉ thường trú</Label>
+                <Input id="permanent_address" name="permanent_address" placeholder="Địa chỉ thường trú" value={formData.permanent_address} onChange={handleChange} disabled={isLoading} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="current_address">Địa chỉ hiện tại</Label>
+                <Input id="current_address" name="current_address" placeholder="Địa chỉ hiện tại" value={formData.current_address} onChange={handleChange} disabled={isLoading} />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="notes">{t('common.additional_notes')}</Label>
-                <Textarea
-                  id="notes"
-                  name="notes"
-                  placeholder={t('common.additional_notes_ph')}
-                  value={formData.notes}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                  rows={4}
-                />
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <Link href="/dashboard/customers" className="flex-1">
-                  <Button variant="outline" className="w-full" disabled={isLoading}>
-                    {t('common.cancel')}
-                  </Button>
-                </Link>
-                <Button type="submit" className="flex-1" disabled={isLoading || isViewer}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t('common.creating')}
-                    </>
-                  ) : (
-                    t('customers.new.create')
-                  )}
-                </Button>
+                <Textarea id="notes" name="notes" placeholder={t('common.additional_notes_ph')} value={formData.notes} onChange={handleChange} disabled={isLoading} rows={3} />
               </div>
             </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Thông tin hồ sơ vay</CardTitle>
+            <CardDescription>Các trường phục vụ hiển thị danh sách và thẩm định khoản vay.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="loan_type">Loại vay</Label>
+                <Select
+                  value={formData.loan_type}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, loan_type: value }))}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger id="loan_type" className="w-full">
+                    <SelectValue placeholder={isVi ? 'Chọn loại vay' : 'Select loan type'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LOAN_TYPE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {isVi ? opt.labelVi : opt.labelEn}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="loan_purpose">Mục đích vay</Label>
+                <Input
+                  id="loan_purpose"
+                  name="loan_purpose"
+                  form="new-customer-form"
+                  placeholder="Mua nhà, kinh doanh..."
+                  value={formData.loan_purpose}
+                  onChange={handleChange}
+                  disabled={isLoading}
+                  className="placeholder:text-muted-foreground/55"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="requested_loan_amount">Khoản vay đề nghị (VND) *</Label>
+                <Input id="requested_loan_amount" name="requested_loan_amount" form="new-customer-form" inputMode="decimal" placeholder="500000000" value={formData.requested_loan_amount} onChange={handleChange} disabled={isLoading} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="requested_term_months">Kỳ hạn vay (tháng) *</Label>
+                <Input id="requested_term_months" name="requested_term_months" form="new-customer-form" inputMode="numeric" placeholder="VD: 36" value={formData.requested_term_months} onChange={handleChange} disabled={isLoading} required />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="annual_interest_rate">Lãi suất năm (%)</Label>
+                <Input id="annual_interest_rate" name="annual_interest_rate" form="new-customer-form" inputMode="decimal" placeholder="VD: 11.5" value={formData.annual_interest_rate} onChange={handleChange} disabled={isLoading} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="collateral_id">Mã tài sản bảo đảm</Label>
+                <Input id="collateral_id" name="collateral_id" form="new-customer-form" placeholder="VD: TSBD-001" value={formData.collateral_id} onChange={handleChange} disabled={isLoading} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="collateral_value">Giá trị tài sản bảo đảm</Label>
+              <Input id="collateral_value" name="collateral_value" form="new-customer-form" inputMode="decimal" placeholder="VD: 900000000" value={formData.collateral_value} onChange={handleChange} disabled={isLoading} />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Link href="/dashboard/customers" className="flex-1">
+                <Button variant="outline" className="w-full" disabled={isLoading}>
+                  {t('common.cancel')}
+                </Button>
+              </Link>
+              <Button type="submit" form="new-customer-form" className="flex-1" disabled={isLoading || isViewer}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('common.creating')}
+                  </>
+                ) : (
+                  t('customers.new.create')
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
