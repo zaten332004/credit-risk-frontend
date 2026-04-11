@@ -169,23 +169,12 @@ export default function AlertsPage() {
     const byStatus = alerts.filter((alert) => (filter === 'all' ? true : alert.status === filter));
     const q = searchQuery.trim().toLowerCase();
     if (!q) return byStatus;
-    return byStatus.filter((alert) => {
-      const typeLabel = formatAlertTypeLabel(alert.alert_type, locale).toLowerCase();
-      const hay = [
-        String(alert.alert_id),
-        String(alert.customer_id ?? ''),
-        String(alert.customer_name ?? ''),
-        String(alert.alert_type ?? ''),
-        typeLabel,
-        String(alert.message ?? ''),
-        String(alert.severity ?? ''),
-        formatStatusLabel(alert.status, locale).toLowerCase(),
-      ]
-        .join(' ')
-        .toLowerCase();
-      return hay.includes(q);
-    });
-  }, [alerts, filter, searchQuery, locale]);
+    return byStatus.filter((alert) =>
+      [String(alert.customer_id ?? ''), String(alert.customer_name ?? ''), String((alert as any).email ?? '')]
+        .filter(Boolean)
+        .some((field) => field.toLowerCase().includes(q)),
+    );
+  }, [alerts, filter, searchQuery]);
   useEffect(() => {
     setPage(1);
   }, [filter, alerts.length, searchQuery]);
@@ -260,7 +249,7 @@ export default function AlertsPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="w-full sm:max-w-md sm:flex-1">
               <Input
-                placeholder={t('common.search')}
+                placeholder={locale === 'vi' ? 'Tìm theo tên, email hoặc CustomerID...' : 'Search by name, email, or CustomerID...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-white"

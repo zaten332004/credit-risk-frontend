@@ -292,7 +292,11 @@ export default function AdminRegistrationsPage() {
             </div>
 
             <div className="w-full md:w-80">
-              <Input placeholder={t('common.search')} value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input
+                placeholder={locale === 'vi' ? 'Tìm theo tên, email hoặc CustomerID...' : 'Search by name, email, or CustomerID...'}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
           </div>
         </CardHeader>

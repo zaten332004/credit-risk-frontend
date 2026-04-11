@@ -135,7 +135,7 @@ export default function CustomersPage() {
       const filtered = !normalizedSearch
         ? mapped
         : mapped.filter((customer) =>
-            [customer.id, customer.name, customer.email, customer.loanType]
+            [customer.id, customer.name, customer.email]
               .filter(Boolean)
               .some((field) => String(field).toLowerCase().includes(normalizedSearch)),
           );

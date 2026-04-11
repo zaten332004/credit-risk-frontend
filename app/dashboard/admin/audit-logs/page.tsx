@@ -401,7 +401,23 @@ export default function AdminAuditLogsPage() {
     const q = query.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter((r) => {
-      const hay = `${r.id} ${r.ts} ${r.actor} ${r.action} ${r.target} ${JSON.stringify(r.raw)}`.toLowerCase();
+      const raw = (r.raw ?? {}) as Record<string, any>;
+      const rawCustomerId =
+        raw.customer_id ??
+        raw.customerId ??
+        raw?.new_value?.customer_id ??
+        raw?.newValue?.customer_id ??
+        raw?.old_value?.customer_id ??
+        raw?.oldValue?.customer_id;
+      const hay = [
+        String(r.actor || ''),
+        String(r.actorRaw || ''),
+        String(raw.email ?? ''),
+        String(raw.user_email ?? ''),
+        String(rawCustomerId ?? ''),
+      ]
+        .join(' ')
+        .toLowerCase();
       return hay.includes(q);
     });
   }, [rows, query]);
@@ -480,7 +496,11 @@ export default function AdminAuditLogsPage() {
               </div>
             </div>
             <div className="w-full md:w-96">
-              <Input placeholder={t('common.search')} value={query} onChange={(e) => setQuery(e.target.value)} />
+              <Input
+                placeholder={locale === 'vi' ? 'Tìm theo tên, email hoặc CustomerID...' : 'Search by name, email, or CustomerID...'}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
             </div>
           </div>
         </CardHeader>

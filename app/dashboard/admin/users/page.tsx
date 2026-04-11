@@ -94,28 +94,6 @@ export default function AdminUsersPage() {
     }
   };
 
-  const searchUsers = async (rawQuery: string) => {
-    const q = rawQuery.trim();
-    if (!q) return loadUsers();
-
-    setIsLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (q.includes('@')) params.set('name_contains', q); // best-effort; backend may ignore
-      else params.set('name_contains', q);
-
-      const data = await browserApiFetchAuth<any>(`/admin/users/search?${params.toString()}`, { method: 'GET' });
-      const rawList = Array.isArray(data) ? data : Array.isArray(data?.items) ? data.items : Array.isArray(data?.value) ? data.value : [];
-      const rows = rawList.map(normalizeUser).filter(Boolean) as AdminUser[];
-      setUsers(rows);
-    } catch (err) {
-      setError(formatApiError(err));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const setUserActive = async (userId: string, isActive: boolean) => {
     setIsLoading(true);
     setError(null);
@@ -189,19 +167,23 @@ export default function AdminUsersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void searchUsers(query);
-    }, 250);
-    return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
-
   const filtered = useMemo(() => {
-    if (scope === 'all') return users;
-    if (scope === 'active') return users.filter((u) => u.isActive);
-    return users.filter((u) => !u.isActive);
-  }, [users, scope]);
+    const byScope =
+      scope === 'all'
+        ? users
+        : scope === 'active'
+          ? users.filter((u) => u.isActive)
+          : users.filter((u) => !u.isActive);
+
+    const q = query.trim().toLowerCase();
+    if (!q) return byScope;
+
+    return byScope.filter((u) =>
+      [u.id, u.name, u.email]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(q)),
+    );
+  }, [users, scope, query]);
   useEffect(() => {
     setPage(1);
   }, [query, scope, users.length]);
