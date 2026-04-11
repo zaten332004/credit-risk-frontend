@@ -160,6 +160,8 @@ export default function RiskScorePage() {
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [isSyncingCustomer, setIsSyncingCustomer] = useState(false);
+  const [loadedCustomerId, setLoadedCustomerId] = useState<number | null>(null);
   const [isExplanationOpen, setIsExplanationOpen] = useState(false);
   const [error, setError] = useState('');
   const lastFetchedLookupRef = useRef<string>('');
@@ -201,9 +203,12 @@ export default function RiskScorePage() {
           })) as Record<string, unknown>;
         }
         applyCustomer(customer);
+        const cid = Number((customer as Record<string, unknown>).customer_id);
+        setLoadedCustomerId(Number.isFinite(cid) ? cid : null);
         lastFetchedLookupRef.current = q;
       } catch (e) {
         lastFetchedLookupRef.current = '';
+        setLoadedCustomerId(null);
         notifyError(formatUserFacingApiError(e));
       } finally {
         setProfileLoading(false);
@@ -225,6 +230,7 @@ export default function RiskScorePage() {
     const { name, value } = e.target;
     if (name === 'customerLookup') {
       lastFetchedLookupRef.current = '';
+      setLoadedCustomerId(null);
       setFormData((prev) => ({
         ...prev,
         customerLookup: value,
@@ -235,6 +241,40 @@ export default function RiskScorePage() {
     }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const syncCustomerAfterScoring = useCallback(
+    async (riskLabel: unknown, riskScore: unknown) => {
+      if (!loadedCustomerId) return;
+      setIsSyncingCustomer(true);
+      try {
+        const normalizedRiskLabel = String(riskLabel || '').trim().toLowerCase();
+        const scoreValue = Number(riskScore);
+        await browserApiFetchAuth(`/customers/${loadedCustomerId}`, {
+          method: 'PUT',
+          body: {
+            full_name: formData.name.trim() || undefined,
+            monthly_income: parseVndDigitsToNumber(formData.incomeDigits),
+            requested_loan_amount: parseVndDigitsToNumber(formData.loanDigits),
+            age: Number(formData.age),
+            credit_score: formData.creditScore ? Number(formData.creditScore) : undefined,
+            loan_type: formData.loanType.trim() || undefined,
+            requested_term_months: formData.loanTermMonths ? Number(formData.loanTermMonths) : undefined,
+            annual_interest_rate: formData.interestRate ? Number(formData.interestRate.replace(',', '.')) : undefined,
+            collateral_value: formData.collateralDigits ? parseVndDigitsToNumber(formData.collateralDigits) : undefined,
+            employment_status: formData.employmentStatus.trim() || formData.employmentDisplay.trim() || undefined,
+            notes: formData.notes.trim() || undefined,
+            risk_level: ['low', 'medium', 'high'].includes(normalizedRiskLabel) ? normalizedRiskLabel : undefined,
+            risk_score: Number.isFinite(scoreValue) ? scoreValue : undefined,
+          },
+        });
+      } catch (err) {
+        notifyError(formatUserFacingApiError(err));
+      } finally {
+        setIsSyncingCustomer(false);
+      }
+    },
+    [formData, loadedCustomerId],
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -308,6 +348,7 @@ export default function RiskScorePage() {
       const data = await response.json();
       setResult(data);
       setIsExplanationOpen(false);
+      await syncCustomerAfterScoring(data?.risk_label, data?.risk_score);
     } catch (err) {
       const message = err instanceof Error ? err.message : t('common.error');
       setError(message);
@@ -604,6 +645,11 @@ export default function RiskScorePage() {
                   >
                     {locale === 'vi' ? 'Xem chi tiết' : 'View details'}
                   </Button>
+                ) : null}
+                {isSyncingCustomer ? (
+                  <p className="text-xs text-muted-foreground">
+                    {locale === 'vi' ? 'Đang đồng bộ hồ sơ khách hàng...' : 'Syncing customer profile...'}
+                  </p>
                 ) : null}
               </CardContent>
             </Card>
